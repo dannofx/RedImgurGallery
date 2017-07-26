@@ -34,7 +34,7 @@ class GalleryCollectionViewController: UICollectionViewController {
         
         let request = NSMutableURLRequest(url: url)
         request.timeoutInterval = 10
-        request.setValue(clientValue, forHTTPHeaderField: HTTPHeaderName.authorization)
+        request.setValue(ImgurCredentials.clientID, forHTTPHeaderField: HTTPHeaderName.authorization)
         
         let task = URLSession.shared.dataTask(with: request as URLRequest) { (data, response, error) in
             if let error = error {
