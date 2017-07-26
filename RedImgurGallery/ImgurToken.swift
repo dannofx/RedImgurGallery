@@ -8,4 +8,4 @@
 
 import Foundation
 
-let clientValue = "Client-ID XXXXX"
+let clientValue = "Client-ID ZZZZZZ"
