@@ -7,21 +7,25 @@
 //
 
 import UIKit
+import CoreData
 
-private let reuseIdentifier = "Cell"
+private let reuseIdentifier = "thumbnail"
 
 class GalleryCollectionViewController: UICollectionViewController {
     
-    var dataController: DataController!
+    fileprivate var dataController: DataController!
+    fileprivate var fetchedResultController: NSFetchedResultsController<Image>!
+    fileprivate var changeOperations: [BlockOperation]?
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        dataController = DataController()
+        self.dataController = DataController()
         // Uncomment the following line to preserve selection between presentations
         // self.clearsSelectionOnViewWillAppear = false
 
         // Register cell classes
         self.collectionView!.register(UICollectionViewCell.self, forCellWithReuseIdentifier: reuseIdentifier)
+        self.fetchedResultController = self.dataController.createFeedFetchedResultController()
         self.downloadImageList()
     }
     
@@ -65,7 +69,6 @@ class GalleryCollectionViewController: UICollectionViewController {
                     print("Error: JSON structure not recognized ('data' not found or not valid).")
                     return
                 }
-                print("JSON data \(imagesData)")
                 self.dataController.insertImageDataArray(dataArray: imagesData, completion: { (success, error) in
                     print("Success?! \(success)")
                 })
@@ -99,19 +102,17 @@ class GalleryCollectionViewController: UICollectionViewController {
     // MARK: UICollectionViewDataSource
 
     override func numberOfSections(in collectionView: UICollectionView) -> Int {
-        // #warning Incomplete implementation, return the number of sections
-        return 0
+        return self.fetchedResultController.sections!.count
     }
 
 
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        // #warning Incomplete implementation, return the number of items
-        return 0
+        return self.fetchedResultController.sections!.first!.numberOfObjects
     }
 
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath)
-    
+        cell.backgroundColor = UIColor.red
         // Configure the cell
     
         return cell
@@ -148,4 +149,54 @@ class GalleryCollectionViewController: UICollectionViewController {
     }
     */
 
+}
+
+
+// MARK: - Fetched Result Controller Delegate
+
+extension GalleryCollectionViewController: NSFetchedResultsControllerDelegate {
+    
+    func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        self.changeOperations = []
+    }
+    
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
+        var operation: BlockOperation
+        switch type {
+        case .insert:
+            guard let newIndexPath = newIndexPath else { return }
+            operation = BlockOperation { [unowned self] in
+                self.collectionView?.insertItems(at: [newIndexPath])
+            }
+        case .delete:
+            guard let indexPath = indexPath else { return }
+            operation = BlockOperation { [unowned self] in
+                self.collectionView?.deleteItems(at: [indexPath])
+            }
+        case .update:
+            guard let newIndexPath = newIndexPath else { return }
+            operation = BlockOperation { [unowned self] in
+                self.collectionView?.reloadItems(at: [newIndexPath])
+            }
+        case .move:
+            guard let indexPath = indexPath else { return }
+            guard let newIndexPath = newIndexPath else { return }
+            operation = BlockOperation { [unowned self] in
+                self.collectionView?.moveItem(at: indexPath, to: newIndexPath)
+            }
+        }
+        changeOperations?.append(operation)
+    }
+    
+    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        guard var changeOperations = self.changeOperations else {
+            return
+        }
+        self.collectionView?.performBatchUpdates({
+            changeOperations.forEach { $0.start() }
+        }, completion: { (success) in
+            changeOperations.removeAll()
+            self.changeOperations = nil
+        })
+    }
 }

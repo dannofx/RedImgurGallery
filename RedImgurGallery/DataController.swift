@@ -48,9 +48,9 @@ class DataController: NSObject {
                 
                 self.insertImageData(data: imageData, context: context)
             }
-            
+            self.saveContext(context: context)
             self.viewContext.perform {
-                completion(false, nil)
+                completion(true, nil)
             }
         }
         
@@ -88,7 +88,7 @@ class DataController: NSObject {
         context.automaticallyMergesChangesFromParent = true
         let image = NSEntityDescription.insertNewObject(forEntityName: String(describing: Image.self), into: context) as! Image
         image.title = data[JSONKey.title] as? String
-        image.id = data[JSONKey.id] as? String
+        image.identifier = data[JSONKey.id] as? String
         image.datetime = data[JSONKey.datetime] as! TimeInterval
         image.views = data[JSONKey.views] as! Int64
         image.link = data[JSONKey.link] as? String
@@ -96,13 +96,13 @@ class DataController: NSObject {
     
     func findImage(withId id: String, context: NSManagedObjectContext) -> Image? {
         let fetchRequest: NSFetchRequest<Image> = Image.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "id == \(id)")
+        fetchRequest.predicate = NSPredicate(format: "identifier == %@", id)
         fetchRequest.resultType = NSFetchRequestResultType.managedObjectResultType
         do  {
             let results = try context.fetch(fetchRequest)
             return results.count > 0 ? results.first! : nil
         } catch {
-            print("Error fetching blocked user result")
+            print("Error fetching image result")
             return nil
         }
     }
@@ -120,5 +120,23 @@ class DataController: NSObject {
                 fatalError("Failure to save context: \(error)")
             }
         }
+    }
+    
+    func createFeedFetchedResultController() -> NSFetchedResultsController<Image> {
+        let fetchRequest: NSFetchRequest<Image> = Image.fetchRequest()
+        let sortDescriptor = NSSortDescriptor(key: #keyPath(Image.datetime), ascending: false)
+        fetchRequest.sortDescriptors = [sortDescriptor]
+        
+        let fetchedResultController = NSFetchedResultsController(fetchRequest: fetchRequest,
+                                                                 managedObjectContext: self.viewContext,
+                                                                 sectionNameKeyPath: nil,
+                                                                 cacheName: nil)
+        do {
+            try fetchedResultController.performFetch()
+        } catch {
+            print("Error fetching image items")
+        }
+        
+        return fetchedResultController
     }
 }
