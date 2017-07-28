@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="12141" systemVersion="16E195" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
-    <entity name="Image" representedClassName="Image" syncable="YES" codeGenerationType="class">
+    <entity name="ImageItem" representedClassName="ImageItem" syncable="YES" codeGenerationType="class">
         <attribute name="datetime" attributeType="Date" usesScalarValueType="YES" indexed="YES" syncable="YES"/>
         <attribute name="identifier" attributeType="String" indexed="YES" syncable="YES"/>
         <attribute name="link" attributeType="String" defaultValueString="noavailable" syncable="YES"/>
@@ -8,6 +8,6 @@
         <attribute name="views" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES" syncable="YES"/>
     </entity>
     <elements>
-        <element name="Image" positionX="-54" positionY="-9" width="128" height="120"/>
+        <element name="ImageItem" positionX="-54" positionY="-9" width="128" height="120"/>
     </elements>
 </model>

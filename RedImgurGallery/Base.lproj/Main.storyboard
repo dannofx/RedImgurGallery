@@ -13,7 +13,7 @@
         <scene sceneID="Fhe-Za-qff">
             <objects>
                 <collectionViewController id="JFO-Ry-dYl" customClass="GalleryCollectionViewController" customModule="RedImgurGallery" customModuleProvider="target" sceneMemberID="viewController">
-                    <collectionView key="view" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" misplaced="YES" dataMode="prototypes" id="cqQ-E4-PbS">
+                    <collectionView key="view" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" id="cqQ-E4-PbS">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
@@ -24,14 +24,28 @@
                             <inset key="sectionInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
                         </collectionViewFlowLayout>
                         <cells>
-                            <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="thumbnail" id="F75-T5-ZpJ">
+                            <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="thumbnail" id="F75-T5-ZpJ" customClass="ThumbnailCollectionViewCell" customModule="RedImgurGallery" customModuleProvider="target">
                                 <rect key="frame" x="0.0" y="0.0" width="85" height="81"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
                                     <rect key="frame" x="0.0" y="0.0" width="85" height="81"/>
                                     <autoresizingMask key="autoresizingMask"/>
+                                    <subviews>
+                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="ZTI-Wy-AZO">
+                                            <rect key="frame" x="0.0" y="0.0" width="85" height="81"/>
+                                        </imageView>
+                                    </subviews>
                                 </view>
                                 <color key="backgroundColor" red="0.36620839929999999" green="0.62039443090000002" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="bottom" secondItem="ZTI-Wy-AZO" secondAttribute="bottom" id="DKg-np-BuA"/>
+                                    <constraint firstItem="ZTI-Wy-AZO" firstAttribute="top" secondItem="F75-T5-ZpJ" secondAttribute="top" id="MBj-0Y-8rH"/>
+                                    <constraint firstItem="ZTI-Wy-AZO" firstAttribute="leading" secondItem="F75-T5-ZpJ" secondAttribute="leading" id="lLK-y0-pYs"/>
+                                    <constraint firstAttribute="trailing" secondItem="ZTI-Wy-AZO" secondAttribute="trailing" id="m1l-md-3vj"/>
+                                </constraints>
+                                <connections>
+                                    <outlet property="imageView" destination="ZTI-Wy-AZO" id="g9z-YH-k6u"/>
+                                </connections>
                             </collectionViewCell>
                         </cells>
                         <connections>

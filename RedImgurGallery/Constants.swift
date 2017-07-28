@@ -10,8 +10,8 @@ import Foundation
 
 struct URLPath {
     static let imageListFormat = "https://api.imgur.com/3/gallery/r/%@/time/all/0"
-    static let thumbnailImageFormat = "https://i.imgur.com/%@.jpg"
-    static let imageFormat = "https://i.imgur.com/%@b.jpg"
+    static let thumbnailImageFormat = "https://i.imgur.com/%@b.jpg"
+    static let imageFormat = "https://i.imgur.com/%@.jpg"
 }
 
 struct HTTPHeaderName {
