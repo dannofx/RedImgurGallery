@@ -21,14 +21,16 @@ class GalleryCollectionViewController: UICollectionViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        ImageFileType.thumbnail.removeAllLocalFiles()
+        
         self.dataController = DataController()
-        downloadQueue = ImageDownloadQueue(imageFileType: self.imageTypeToShow)
-        self.collectionView?.isPrefetchingEnabled = false
-
-        // Register cell classes
+        self.downloadQueue = ImageDownloadQueue(imageFileType: self.imageTypeToShow)
         self.fetchedResultController = self.dataController.createFeedFetchedResultController()
+        
         self.fetchedResultController.delegate = self
+        self.collectionView?.isPrefetchingEnabled = false
+        
+        //self.dataController.deleteAllImageItems()
+        ImageFileType.thumbnail.removeAllLocalFiles()
         self.downloadImageList()
     }
     

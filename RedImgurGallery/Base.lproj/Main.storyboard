@@ -55,6 +55,7 @@
                     </collectionView>
                     <connections>
                         <outlet property="searchDisplayController" destination="Ein-UE-egs" id="B14-vR-bTT"/>
+                        <segue destination="07w-xs-s4Y" kind="showDetail" identifier="detail" id="LT3-ak-ACL"/>
                     </connections>
                 </collectionViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="cE5-ct-fc8" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -68,6 +69,14 @@
                 </searchDisplayController>
             </objects>
             <point key="canvasLocation" x="916" y="138.98050974512745"/>
+        </scene>
+        <!--Page View Controller-->
+        <scene sceneID="fIW-b1-ego">
+            <objects>
+                <pageViewController autoresizesArchivedViewToFullSize="NO" transitionStyle="pageCurl" navigationOrientation="horizontal" spineLocation="min" id="07w-xs-s4Y" sceneMemberID="viewController"/>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="YNH-Vh-JBd" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1759" y="139"/>
         </scene>
     </scenes>
 </document>

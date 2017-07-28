@@ -28,6 +28,10 @@ struct JSONKey {
     static let type = "type"
 }
 
+struct StoryboardSegue {
+    static let detail = "detail"
+}
+
 enum ImageError: Error {
     case coreData
     case duplicatedBatch
