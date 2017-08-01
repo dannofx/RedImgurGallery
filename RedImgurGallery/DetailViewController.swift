@@ -9,11 +9,42 @@
 import UIKit
 
 class DetailViewController: UIViewController {
+    
+    @IBOutlet weak var titleLabel: UILabel!
+    @IBOutlet weak var imageView: UIImageView!
+
+    weak var downloadQueue: ImageDownloadQueue!
+    var index: IndexPath!
+    var imageItem: ImageItem! {
+        didSet {
+            self.loadImage()
+        }
+    }
+    
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.titleLabel.text = self.imageItem.title
+        self.loadImage()
 
-        // Do any additional setup after loading the view.
+    }
+    
+    func loadImage() {
+        if let image = self.imageItem.loadImage(forType: .full) {
+            self.setFullImage(image: image)
+        } else {
+            self.downloadQueue.addDownload(imageItem: self.imageItem) { (status, identifier, objectID, image) in
+                if let image = image {
+                    self.setFullImage(image: image)
+                }
+            }
+        }
+    }
+    
+    func setFullImage(image: UIImage) {
+        if self.isViewLoaded {
+            self.imageView.image = image
+        }
     }
 
     override func didReceiveMemoryWarning() {

@@ -11,7 +11,7 @@ import CoreData
 
 class ImageDownloadQueue: OperationQueue {
     fileprivate(set) var imageFileType: ImageFileType
-    fileprivate(set) var downloadsInProgress: [NSManagedObjectID: Operation]
+    fileprivate(set) var downloadsInProgress: [NSManagedObjectID: ImageDownloadOperation]
     
     init(imageFileType: ImageFileType) {
         self.imageFileType = imageFileType
@@ -27,8 +27,11 @@ class ImageDownloadQueue: OperationQueue {
         }
         let operation = ImageDownloadOperation(imageType: self.imageFileType, imageItem: imageItem)
         self.downloadsInProgress[imageItem.objectID] = operation
-        operation.completionBlock = {
-            self.downloadsInProgress.removeValue(forKey: operation.coreDataID)
+        let objectID = operation.coreDataID
+        operation.completionBlock = { [unowned self] in
+            guard let operation = self.downloadsInProgress.removeValue(forKey: objectID) else {
+                return
+            }
             DispatchQueue.main.async {
                 completionBlock?(operation.downloadStatus, operation.identifier, operation.coreDataID, operation.image)
             }

@@ -17,7 +17,8 @@ class GalleryCollectionViewController: UICollectionViewController {
     fileprivate var fetchedResultController: NSFetchedResultsController<ImageItem>!
     fileprivate var changeOperations: [BlockOperation]?
     fileprivate var downloadQueue: ImageDownloadQueue!
-    let imageTypeToShow = ImageFileType.thumbnail
+    fileprivate let imageTypeToShow = ImageFileType.thumbnail
+    fileprivate var selectedIndex: IndexPath!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -30,13 +31,23 @@ class GalleryCollectionViewController: UICollectionViewController {
         self.collectionView?.isPrefetchingEnabled = false
         
         //self.dataController.deleteAllImageItems()
-        ImageFileType.thumbnail.removeAllLocalFiles()
+        //ImageFileType.thumbnail.removeAllLocalFiles()
+        //ImageFileType.full.removeAllLocalFiles()
         self.downloadImageList()
     }
     
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == StoryboardSegue.detail {
+            let navController = segue.destination as! UINavigationController
+            let carouselController = navController.viewControllers.first as! CarouselViewController
+            carouselController.fetchedResultsController = self.fetchedResultController
+            carouselController.currentIndex = self.selectedIndex
+        }
     }
 }
 
@@ -86,6 +97,8 @@ extension GalleryCollectionViewController {
     }
     
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        self.selectedIndex = indexPath
+        self.performSegue(withIdentifier: StoryboardSegue.detail, sender: self)
         
     }
     

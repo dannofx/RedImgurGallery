@@ -32,6 +32,10 @@ struct StoryboardSegue {
     static let detail = "detail"
 }
 
+struct StoryboardID {
+    static let detail = "detail"
+}
+
 enum ImageError: Error {
     case coreData
     case duplicatedBatch

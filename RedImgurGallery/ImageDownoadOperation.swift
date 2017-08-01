@@ -60,5 +60,9 @@ class ImageDownloadOperation: Operation {
             print("Error retrieving data for \(identifier): \(error.localizedDescription)")
         }
     }
+    
+    deinit {
+        print("Dealloc")
+    }
 
 }

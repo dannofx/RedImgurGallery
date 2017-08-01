@@ -55,7 +55,7 @@
                     </collectionView>
                     <connections>
                         <outlet property="searchDisplayController" destination="Ein-UE-egs" id="B14-vR-bTT"/>
-                        <segue destination="07w-xs-s4Y" kind="showDetail" identifier="detail" id="LT3-ak-ACL"/>
+                        <segue destination="D6A-TE-atf" kind="showDetail" identifier="detail" id="bGz-ex-H1q"/>
                     </connections>
                 </collectionViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="cE5-ct-fc8" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -68,15 +68,79 @@
                     </connections>
                 </searchDisplayController>
             </objects>
-            <point key="canvasLocation" x="916" y="138.98050974512745"/>
+            <point key="canvasLocation" x="1194" y="-4"/>
         </scene>
-        <!--Page View Controller-->
+        <!--Carousel View Controller-->
         <scene sceneID="fIW-b1-ego">
             <objects>
-                <pageViewController autoresizesArchivedViewToFullSize="NO" transitionStyle="pageCurl" navigationOrientation="horizontal" spineLocation="min" id="07w-xs-s4Y" sceneMemberID="viewController"/>
+                <pageViewController autoresizesArchivedViewToFullSize="NO" transitionStyle="scroll" navigationOrientation="horizontal" spineLocation="none" id="07w-xs-s4Y" customClass="CarouselViewController" customModule="RedImgurGallery" customModuleProvider="target" sceneMemberID="viewController">
+                    <navigationItem key="navigationItem" id="qAd-jC-ljm">
+                        <barButtonItem key="leftBarButtonItem" systemItem="cancel" id="Uhz-Bg-Vhx">
+                            <connections>
+                                <action selector="cancel:" destination="07w-xs-s4Y" id="Yz9-ra-sgQ"/>
+                            </connections>
+                        </barButtonItem>
+                        <barButtonItem key="rightBarButtonItem" title="Item" id="qEH-B4-bgH">
+                            <connections>
+                                <action selector="finish:" destination="07w-xs-s4Y" id="Z2d-N1-l5L"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
+                </pageViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="YNH-Vh-JBd" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="1759" y="139"/>
+            <point key="canvasLocation" x="2830" y="-4"/>
+        </scene>
+        <!--Detail View Controller-->
+        <scene sceneID="eew-EV-UYQ">
+            <objects>
+                <viewController storyboardIdentifier="detail" id="ES8-O0-GBS" customClass="DetailViewController" customModule="RedImgurGallery" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="HAp-wB-djG"/>
+                        <viewControllerLayoutGuide type="bottom" id="ATT-hW-5cx"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="dla-m0-dhL">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YhJ-MZ-mA9">
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="402"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="6Cz-F7-i86">
+                                <rect key="frame" x="16" y="424" width="273" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    </view>
+                    <connections>
+                        <outlet property="imageView" destination="YhJ-MZ-mA9" id="xkf-cZ-GVz"/>
+                        <outlet property="titleLabel" destination="6Cz-F7-i86" id="Vro-w6-YMU"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="ug3-Po-OqU" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="3872.8000000000002" y="-5.8470764617691158"/>
+        </scene>
+        <!--Navigation Controller-->
+        <scene sceneID="zWN-Z0-C5Y">
+            <objects>
+                <navigationController id="D6A-TE-atf" sceneMemberID="viewController">
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="t8t-7W-yZn">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <connections>
+                        <segue destination="07w-xs-s4Y" kind="relationship" relationship="rootViewController" id="9u7-jL-ohW"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="a0C-vL-qjm" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2046" y="-4"/>
         </scene>
     </scenes>
 </document>
