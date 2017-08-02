@@ -14,7 +14,9 @@ class DetailViewController: UIViewController {
     @IBOutlet weak var imageView: UIImageView!
 
     weak var downloadQueue: ImageDownloadQueue!
+    var cache: [String: UIImage]?
     var index: IndexPath!
+    var image: UIImage!
     var imageItem: ImageItem! {
         didSet {
             self.loadImage()
@@ -42,8 +44,13 @@ class DetailViewController: UIViewController {
     }
     
     func setFullImage(image: UIImage) {
-        if self.isViewLoaded {
-            self.imageView.image = image
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.image = image.forceLoad()
+            if self.isViewLoaded {
+                DispatchQueue.main.async {
+                    self.imageView.image = self.image
+                }
+            }
         }
     }
 

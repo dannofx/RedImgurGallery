@@ -103,7 +103,7 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YhJ-MZ-mA9">
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="perrito" translatesAutoresizingMaskIntoConstraints="NO" id="YhJ-MZ-mA9">
                                 <rect key="frame" x="0.0" y="0.0" width="375" height="402"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
@@ -143,4 +143,7 @@
             <point key="canvasLocation" x="2046" y="-4"/>
         </scene>
     </scenes>
+    <resources>
+        <image name="perrito" width="3024" height="4032"/>
+    </resources>
 </document>

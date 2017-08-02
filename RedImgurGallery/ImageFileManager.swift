@@ -19,7 +19,7 @@ class ImageFileManager {
     }
     
     static func writeImage(image: UIImage, toFile fileURL: URL) {
-        guard let data = UIImagePNGRepresentation(image) else {
+        guard let data = UIImageJPEGRepresentation(image, 0.8) else {
             return
         }
         try! data.write(to: fileURL)

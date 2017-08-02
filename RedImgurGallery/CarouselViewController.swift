@@ -14,8 +14,10 @@ class CarouselViewController: UIPageViewController {
     var fetchedResultsController: NSFetchedResultsController<ImageItem>!
     var currentIndex: IndexPath!
     var indexToShow: IndexPath!
+    fileprivate let preloadedControllersSize = 3 //for each side
     fileprivate let imageTypeToShow = ImageFileType.full
     fileprivate var downloadQueue: ImageDownloadQueue!
+    fileprivate var pageControllers: [Int: DetailViewController]!
 
 
     override func viewDidLoad() {
@@ -24,13 +26,55 @@ class CarouselViewController: UIPageViewController {
         self.dataSource = self
         self.indexToShow = self.currentIndex
         self.downloadQueue = ImageDownloadQueue(imageFileType: self.imageTypeToShow)
+        self.createPageControllers()
         self.loadCurrentController()
 
+    }
+    
+    func createPageControllers() {
+        let totalSize = self.preloadedControllersSize * 2 + 1
+        pageControllers = [Int: DetailViewController]()
+        for i in 0..<totalSize {
+            let controller = self.createController()
+            pageControllers[i] = controller
+        }
+        self.refreshControllers(forMainIndex: self.currentIndex, forceReaload: true)
+    }
+    
+    func refreshControllers(forMainIndex mainIndex: IndexPath, forceReaload: Bool = false) {
+        
+        let fetchedElements = self.fetchedResultsController.sections![0].numberOfObjects
+        let index = mainIndex.row
+        var min = index - preloadedControllersSize
+        var max = index + preloadedControllersSize
+        if max >= fetchedElements {
+            min -= fetchedElements - max + 1
+            max = fetchedElements - 1
+        }
+        if min < 0 {
+            max += min * -1
+            if max >= fetchedElements {
+                max = fetchedElements - 1
+            }
+            min = 0
+        }
+        var freeControllers = self.pageControllers.filter { pair in pair.key < min || pair.key > max }
+        for i in min...max {
+            if self.pageControllers[i] == nil {
+                let pair = freeControllers.first!
+                self.pageControllers[i] = pair.value
+                self.pageControllers.removeValue(forKey: pair.key)
+                freeControllers.removeFirst()
+                self.configureController(pair.value, forIndex: i)
+            } else if forceReaload && i < fetchedElements {
+                self.configureController(self.pageControllers[i]!, forIndex: i)
+            }
+        }
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
+        print("Running low on memory!")
     }
     
     @IBAction func cancel(_ sender: Any) {
@@ -41,18 +85,24 @@ class CarouselViewController: UIPageViewController {
         self.loadCurrentController()
     }
     
-    func createController(forIndex index: IndexPath) -> DetailViewController {
+
+    func createController() -> DetailViewController {
         let detailController = self.storyboard?.instantiateViewController(withIdentifier: StoryboardID.detail) as! DetailViewController
-        detailController.index = index
         detailController.downloadQueue = self.downloadQueue
-        detailController.imageItem = self.fetchedResultsController.object(at: index)
-        print("TITLE \(detailController.imageItem.title)")
         return detailController
     }
     
+    func configureController(_ detailController: DetailViewController, forIndex index: Int) {
+        let indexPath = IndexPath(row: index, section: 0)
+        detailController.downloadQueue = self.downloadQueue
+        detailController.index = indexPath
+        detailController.imageItem = self.fetchedResultsController.object(at: indexPath)
+    }
+    
     func loadCurrentController() {
-        let detailViewController = self.createController(forIndex: self.currentIndex)
-        self.setViewControllers([detailViewController], direction: .forward, animated: false, completion: nil)
+        if let detailViewController = self.pageControllers[self.currentIndex.row] {
+            self.setViewControllers([detailViewController], direction: .forward, animated: false, completion: nil)
+        }
     }
     
     /*
@@ -74,8 +124,7 @@ extension CarouselViewController: UIPageViewControllerDataSource {
         var row = self.currentIndex.row
         row -= 1
         if row >= 0 {
-            let newIndex = IndexPath.init(row: row, section: 0)
-            return self.createController(forIndex: newIndex)
+            return self.pageControllers[row]
         } else {
             return nil
         }
@@ -85,8 +134,7 @@ extension CarouselViewController: UIPageViewControllerDataSource {
         var row = self.currentIndex.row
         row += 1
         if row < self.fetchedResultsController.sections![0].numberOfObjects {
-            let newIndex = IndexPath.init(row: row, section: 0)
-            return self.createController(forIndex: newIndex)
+            return self.pageControllers[row]
         } else {
             return nil
         }
@@ -105,6 +153,7 @@ extension CarouselViewController: UIPageViewControllerDelegate {
     public func pageViewController(_ pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
         if (self.indexToShow != self.currentIndex) {
             self.currentIndex =  self.indexToShow
+            self.refreshControllers(forMainIndex: self.currentIndex)
         }
     }
 }

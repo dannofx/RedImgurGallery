@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5121CD6F1F3185EB00215842 /* UIimage+Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5121CD6E1F3185EB00215842 /* UIimage+Utils.swift */; };
 		512381A91F2AFACC001A0C65 /* ImageFileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 512381A81F2AFACC001A0C65 /* ImageFileManager.swift */; };
 		512381AB1F2AFAED001A0C65 /* ImageFileType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 512381AA1F2AFAED001A0C65 /* ImageFileType.swift */; };
 		512381B41F2B09D6001A0C65 /* CarouselViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 512381B31F2B09D6001A0C65 /* CarouselViewController.swift */; };
@@ -27,6 +28,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		5121CD6E1F3185EB00215842 /* UIimage+Utils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIimage+Utils.swift"; sourceTree = "<group>"; };
 		512381A81F2AFACC001A0C65 /* ImageFileManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageFileManager.swift; sourceTree = "<group>"; };
 		512381AA1F2AFAED001A0C65 /* ImageFileType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageFileType.swift; sourceTree = "<group>"; };
 		512381B31F2B09D6001A0C65 /* CarouselViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CarouselViewController.swift; sourceTree = "<group>"; };
@@ -104,6 +106,7 @@
 				51400A051F2852EB005EABF0 /* ImgurToken.swift */,
 				512381A81F2AFACC001A0C65 /* ImageFileManager.swift */,
 				512381AA1F2AFAED001A0C65 /* ImageFileType.swift */,
+				5121CD6E1F3185EB00215842 /* UIimage+Utils.swift */,
 			);
 			name = Utils;
 			sourceTree = "<group>";
@@ -225,6 +228,7 @@
 				51E9F8FF1F2A925B00BCAAD6 /* ImageDownloadQueue.swift in Sources */,
 				51400A041F2852CE005EABF0 /* Constants.swift in Sources */,
 				51400A0B1F285672005EABF0 /* ImgurModel.xcdatamodeld in Sources */,
+				5121CD6F1F3185EB00215842 /* UIimage+Utils.swift in Sources */,
 				512381A91F2AFACC001A0C65 /* ImageFileManager.swift in Sources */,
 				512381B61F2B09E5001A0C65 /* DetailViewController.swift in Sources */,
 			);
