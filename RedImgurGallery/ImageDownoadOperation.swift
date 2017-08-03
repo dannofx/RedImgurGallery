@@ -17,6 +17,8 @@ enum ImageDownloadStatus {
     case failed
 }
 
+typealias ClientCompletionBlock = (_ status: ImageDownloadStatus, _ identifier: String, _ objectID: NSManagedObjectID, _ image: UIImage?) -> Void
+
 class ImageDownloadOperation: Operation {
     
     fileprivate(set) var downloadStatus: ImageDownloadStatus
@@ -24,6 +26,7 @@ class ImageDownloadOperation: Operation {
     let imageType: ImageFileType
     let identifier: String
     let coreDataID: NSManagedObjectID
+    var clientCompletionBlock: ClientCompletionBlock?
     
     
     init(imageType: ImageFileType, imageItem: ImageItem) {
@@ -47,17 +50,36 @@ class ImageDownloadOperation: Operation {
                 self.downloadStatus = .cancelled
                 return
             }
-            guard let image = UIImage(data: data) else {
+            guard var image = UIImage(data: data) else {
                 print("Image download failed for \(identifier)")
                 self.downloadStatus = .failed
+                return
+            }
+            image = image.resizeImage(inMaxSize: self.imageType.maxSize)
+            if self.isCancelled {
+                self.downloadStatus = .cancelled
                 return
             }
             self.image = image
             self.downloadStatus = .downloaded
             ImageItem.saveImageFile(image: image, forIdentifier: self.identifier, type: self.imageType)
+            self.createThumbnailIfNecessary(image: image)
+
         } catch {
             self.downloadStatus = .failed
             print("Error retrieving data for \(identifier): \(error.localizedDescription)")
+        }
+    }
+    
+    private func createThumbnailIfNecessary(image: UIImage) {
+        if self.imageType == .full {
+            let thumbnailExists = ImageItem.thumbnailExists(identifier: self.identifier)
+            if !thumbnailExists {
+                guard let thumbImage = image.cropAndResizeInSquare(sideLength: ImageFileType.thumbnail.maxSize.width) else {
+                    return
+                }
+                ImageItem.saveImageFile(image: thumbImage, forIdentifier: self.identifier, type: .thumbnail)
+            }
         }
     }
     

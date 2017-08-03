@@ -28,11 +28,12 @@
                                 <rect key="frame" x="0.0" y="0.0" width="85" height="81"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center">
-                                    <rect key="frame" x="0.0" y="0.0" width="85" height="81"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="160" height="81"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="ZTI-Wy-AZO">
                                             <rect key="frame" x="0.0" y="0.0" width="85" height="81"/>
+                                            <color key="backgroundColor" red="0.92941176469999998" green="0.23529411759999999" blue="0.37254901959999998" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         </imageView>
                                     </subviews>
                                 </view>
@@ -103,7 +104,7 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="perrito" translatesAutoresizingMaskIntoConstraints="NO" id="YhJ-MZ-mA9">
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YhJ-MZ-mA9">
                                 <rect key="frame" x="0.0" y="0.0" width="375" height="402"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
@@ -143,7 +144,4 @@
             <point key="canvasLocation" x="2046" y="-4"/>
         </scene>
     </scenes>
-    <resources>
-        <image name="perrito" width="3024" height="4032"/>
-    </resources>
 </document>

@@ -17,26 +17,29 @@ class ImageDownloadQueue: OperationQueue {
         self.imageFileType = imageFileType
         self.downloadsInProgress = [:]
         super.init()
-        self.maxConcurrentOperationCount = 5
+        self.maxConcurrentOperationCount = 4
         self.name = imageFileType.directoryName
     }
     
-    func addDownload(imageItem: ImageItem, completionBlock: ((_ status: ImageDownloadStatus, _ identifier: String, _ objectID: NSManagedObjectID, _ image: UIImage?) -> Void)?) {
-        if self.downloadsInProgress[imageItem.objectID] != nil {
+    func addDownload(imageItem: ImageItem, completionBlock: ClientCompletionBlock?) {
+        if let operation = self.downloadsInProgress[imageItem.objectID] {
+            operation.clientCompletionBlock = completionBlock
             return
         }
         let operation = ImageDownloadOperation(imageType: self.imageFileType, imageItem: imageItem)
-        self.downloadsInProgress[imageItem.objectID] = operation
         let objectID = operation.coreDataID
-        operation.completionBlock = { [unowned self] in
-            guard let operation = self.downloadsInProgress.removeValue(forKey: objectID) else {
+        self.downloadsInProgress[imageItem.objectID] = operation
+        self.addOperation(operation)
+        operation.clientCompletionBlock = completionBlock
+        operation.completionBlock = { [weak self] in
+            guard let operation = self?.downloadsInProgress.removeValue(forKey: objectID) else {
                 return
             }
             DispatchQueue.main.async {
-                completionBlock?(operation.downloadStatus, operation.identifier, operation.coreDataID, operation.image)
+                operation.clientCompletionBlock?(operation.downloadStatus, operation.identifier, operation.coreDataID, operation.image)
             }
         }
-        self.addOperation(operation)
+        
     }
     
     func cancelDownload(imageItem: ImageItem) {

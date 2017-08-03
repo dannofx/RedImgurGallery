@@ -28,4 +28,8 @@ extension ImageItem {
         let image = ImageFileManager.loadImage(fromFile: type.getLocalFilePath(forId: identifier))
         return image
     }
+    
+    class func thumbnailExists(identifier: String) -> Bool {
+        return ImageFileManager.checkIfFileExists(filePath: ImageFileType.thumbnail.getLocalFilePath(forId: identifier).path)
+    }
 }

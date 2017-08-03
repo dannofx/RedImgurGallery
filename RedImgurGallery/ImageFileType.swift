@@ -35,6 +35,15 @@ enum ImageFileType {
         }
     }
     
+    var maxSize: CGSize {
+        switch self {
+        case .full:
+            return CGSize(width: 2000, height: 2000)
+        case .thumbnail:
+            return CGSize(width: 170, height: 170)
+        }
+    }
+    
     func getLocalFilePath(forId identifier: String) -> URL {
         return self.directoryPath.appendingPathComponent(identifier)
     }

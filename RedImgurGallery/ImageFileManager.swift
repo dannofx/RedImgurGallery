@@ -70,4 +70,12 @@ class ImageFileManager {
         return exists
     }
     
+    static func checkIfFileExists(filePath: String) -> Bool {
+        let fileManager = FileManager.default
+        var exists: Bool = false
+        var isDir : ObjCBool = false
+        exists = fileManager.fileExists(atPath: filePath, isDirectory: &isDir)
+        return exists
+    }
+    
 }

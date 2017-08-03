@@ -14,9 +14,9 @@ class DetailViewController: UIViewController {
     @IBOutlet weak var imageView: UIImageView!
 
     weak var downloadQueue: ImageDownloadQueue!
-    var cache: [String: UIImage]?
     var index: IndexPath!
     var image: UIImage!
+    var localLoadWorkItem: DispatchWorkItem?
     var imageItem: ImageItem! {
         didSet {
             self.loadImage()
@@ -32,11 +32,12 @@ class DetailViewController: UIViewController {
     }
     
     func loadImage() {
+        self.setPreviewImage()
         if let image = self.imageItem.loadImage(forType: .full) {
             self.setFullImage(image: image)
         } else {
             self.downloadQueue.addDownload(imageItem: self.imageItem) { (status, identifier, objectID, image) in
-                if let image = image {
+                if let image = image, identifier == self.imageItem.identifier{
                     self.setFullImage(image: image)
                 }
             }
@@ -44,13 +45,26 @@ class DetailViewController: UIViewController {
     }
     
     func setFullImage(image: UIImage) {
-        DispatchQueue.global(qos: .userInitiated).async {
+        if let existingItem = self.localLoadWorkItem, !existingItem.isCancelled{
+                existingItem.cancel()
+        }
+        
+        let workItem = DispatchWorkItem(flags: .inheritQoS) {
             self.image = image.forceLoad()
             if self.isViewLoaded {
                 DispatchQueue.main.async {
                     self.imageView.image = self.image
                 }
             }
+        }
+        
+        DispatchQueue.global(qos: .userInitiated).async(execute: workItem)
+        self.localLoadWorkItem = workItem
+    }
+    
+    func setPreviewImage() {
+        if self.isViewLoaded {
+            self.imageView.image = self.imageItem.loadImage(forType: .thumbnail)
         }
     }
 

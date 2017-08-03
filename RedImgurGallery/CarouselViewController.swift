@@ -14,7 +14,7 @@ class CarouselViewController: UIPageViewController {
     var fetchedResultsController: NSFetchedResultsController<ImageItem>!
     var currentIndex: IndexPath!
     var indexToShow: IndexPath!
-    fileprivate let preloadedControllersSize = 3 //for each side
+    fileprivate let preloadedControllersSize = 2 //for each side
     fileprivate let imageTypeToShow = ImageFileType.full
     fileprivate var downloadQueue: ImageDownloadQueue!
     fileprivate var pageControllers: [Int: DetailViewController]!
