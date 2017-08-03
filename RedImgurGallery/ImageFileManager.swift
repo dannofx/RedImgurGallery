@@ -8,15 +8,17 @@
 
 import UIKit
 
+
+
 class ImageFileManager {
     
     private static var directoriesExistence: [String: Bool] = [:]
     
-    static var documentsDirectory: URL {
+    static var documentsDirectory: URL = {
         let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
         let documentsDirectory = paths[0]
         return documentsDirectory
-    }
+    }()
     
     static func writeImage(image: UIImage, toFile fileURL: URL) {
         guard let data = UIImageJPEGRepresentation(image, 0.8) else {

@@ -8,6 +8,8 @@
 
 import UIKit
 
+fileprivate var directories: [ImageFileType: URL] = [:]
+
 enum ImageFileType {
     case full
     case thumbnail
@@ -22,8 +24,13 @@ enum ImageFileType {
     }
     
     var directoryPath: URL {
-        let directoryName = self.directoryName
-        return ImageFileManager.documentsDirectory.appendingPathComponent(directoryName)
+        var directory = directories[self]
+        if (directory == nil) {
+            let directoryName = self.directoryName
+            directory = ImageFileManager.documentsDirectory.appendingPathComponent(directoryName)
+            directories[self] = directory!
+        }
+        return directory!
     }
     
     var urlFormat: String {
