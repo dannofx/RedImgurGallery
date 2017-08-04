@@ -8,6 +8,10 @@
 
 import Foundation
 
+struct StoredValues {
+    static let lastSearchTerm = "lastSearchTerm"
+}
+
 struct URLPath {
     static let imageListFormat = "https://api.imgur.com/3/gallery/r/%@/time/all/0"
     static let thumbnailImageFormat = "https://i.imgur.com/%@b.jpg"

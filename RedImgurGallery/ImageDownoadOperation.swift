@@ -82,9 +82,4 @@ class ImageDownloadOperation: Operation {
             }
         }
     }
-    
-    deinit {
-        print("Dealloc")
-    }
-
 }

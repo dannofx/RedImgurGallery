@@ -72,16 +72,18 @@ extension DataController {
         return fetchedResultController
     }
     
-    func deleteAllImageItems() {
+    func deleteAllImageItems(completionBlock: ((_ success: Bool) -> Void)? = nil) {
         self.persistentContainer.performBackgroundTask { (context) in
             context.automaticallyMergesChangesFromParent = true
             let fetchRequest: NSFetchRequest<ImageItem> = ImageItem.fetchRequest()
             let batchDeleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest as! NSFetchRequest<NSFetchRequestResult>)
             do {
                 try context.execute(batchDeleteRequest)
-                self.viewContext.refreshAllObjects()
+                self.viewContext.reset()
                 //TODO: Check this solution https://stackoverflow.com/questions/33533750/core-data-nsbatchdeleterequest-appears-to-leave-objects-in-context
+                completionBlock?(true)
             } catch {
+                completionBlock?(false)
                 print("Error: Error deleting records \(error.localizedDescription)")
             }
         }

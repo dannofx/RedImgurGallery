@@ -13,27 +13,38 @@ private let reuseIdentifier = "thumbnail"
 
 class GalleryCollectionViewController: UICollectionViewController {
     
+    @IBOutlet weak var searchView: UIView!
+    @IBOutlet weak var searchTextField: UITextField!
+    @IBOutlet weak var cancelEditionButton: UIButton!
+    @IBOutlet weak var messageView: UIView!
+    @IBOutlet weak var messageLabel: UILabel!
+    
     fileprivate var dataController: DataController!
     fileprivate var fetchedResultController: NSFetchedResultsController<ImageItem>!
     fileprivate var changeOperations: [BlockOperation]?
     fileprivate var downloadQueue: ImageDownloadQueue!
     fileprivate let imageTypeToShow = ImageFileType.thumbnail
     fileprivate var selectedIndex: IndexPath!
+    fileprivate var listDownloadTask: URLSessionDataTask?
+    lazy fileprivate var lastValidSearchTerm: String! = {
+        return (UserDefaults.standard.value(forKey: StoredValues.lastSearchTerm) as? String) ?? ""
+    }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.searchTextField.delegate = self
+        self.searchTextField.text = self.lastValidSearchTerm
+        self.setSearchViewWidth()
         
+        NotificationCenter.default.addObserver(self, selector: #selector(viewDidRotate), name: NSNotification.Name.UIDeviceOrientationDidChange, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(didEnterBackground), name: .UIApplicationDidEnterBackground, object: nil)
+
         self.dataController = DataController()
         self.downloadQueue = ImageDownloadQueue(imageFileType: self.imageTypeToShow)
         self.fetchedResultController = self.dataController.createFeedFetchedResultController()
         
         self.fetchedResultController.delegate = self
         self.collectionView?.isPrefetchingEnabled = false
-        
-        //self.dataController.deleteAllImageItems()
-        //ImageFileType.thumbnail.removeAllLocalFiles()
-        //ImageFileType.full.removeAllLocalFiles()
-        self.downloadImageList()
     }
     
     override func didReceiveMemoryWarning() {
@@ -43,11 +54,87 @@ class GalleryCollectionViewController: UICollectionViewController {
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == StoryboardSegue.detail {
-            let navController = segue.destination as! UINavigationController
-            let carouselController = navController.viewControllers.first as! CarouselViewController
+            let carouselController = segue.destination as! CarouselViewController
             carouselController.fetchedResultsController = self.fetchedResultController
             carouselController.currentIndex = self.selectedIndex
+            self.navigationController?.setNavigationBarHidden(false, animated: true)
         }
+    }
+    
+    func viewDidRotate() {
+        self.setSearchViewWidth()
+    }
+    
+    func didEnterBackground() {
+        UserDefaults.standard.set(lastValidSearchTerm, forKey: StoredValues.lastSearchTerm)
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+}
+
+// MARk: Search field
+
+extension GalleryCollectionViewController {
+    
+    func setSearchViewWidth() {
+        var frame: CGRect = self.searchView.frame
+        frame.size.width = self.view.frame.width
+        self.searchView.frame = frame
+    }
+    
+    @IBAction func didTextChanged(_ sender: UITextField) {
+        if let searchTerm = sender.text, searchTerm != "" {
+            if let listDownloadTask = self.listDownloadTask {
+                listDownloadTask.cancel()
+            }
+            self.listDownloadTask = self.downloadImageList(searchTerm)
+            self.messageView.isHidden = true
+            if (self.listDownloadTask == nil) {
+                self.searchTextField.text = lastValidSearchTerm
+            }
+        }
+    }
+    
+    @IBAction func cancelTextEdition(_ sender: Any) {
+        if self.searchTextField.isEditing {
+            self.exitSearchEdition()
+        }
+    }
+    
+    @IBAction func didBeginEdition(_ sender: UITextField) {
+        self.beginSearchEdition()
+    }
+    
+    func exitSearchEdition() {
+        self.searchTextField.resignFirstResponder()
+        self.cancelEditionButton.isHidden = true
+        self.messageView.isHidden = true
+    }
+    
+    func beginSearchEdition() {
+        self.cancelEditionButton.isHidden = false
+    }
+}
+
+// MARK: - UITextFieldDelegate
+extension GalleryCollectionViewController: UITextFieldDelegate {
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        self.exitSearchEdition()
+        return false
+    }
+
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        let text = string
+        let existingChars = self.searchTextField.text?.characters.count ?? 0
+        if (existingChars + text.characters.count) > 21 {
+            return false
+        }
+        let characterSet = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "_"))
+        let range = text.rangeOfCharacter(from: characterSet.inverted)
+        return range == nil
     }
 }
 
@@ -67,6 +154,11 @@ extension GalleryCollectionViewController {
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! ThumbnailCollectionViewCell
         let imageItem = self.fetchedResultController.object(at: indexPath)
+        if imageItem.identifier == nil
+        {
+            print("Something strange happened :S")
+            return cell
+        }
         if let imageFile = imageItem.loadImage(forType: self.imageTypeToShow) {
             cell.imageView.image = imageFile
         } else {
@@ -97,8 +189,12 @@ extension GalleryCollectionViewController {
     }
     
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        self.selectedIndex = indexPath
-        self.performSegue(withIdentifier: StoryboardSegue.detail, sender: self)
+        if self.searchTextField.isEditing {
+            self.exitSearchEdition()
+        } else {
+            self.selectedIndex = indexPath
+            self.performSegue(withIdentifier: StoryboardSegue.detail, sender: self)
+        }
         
     }
     
@@ -146,7 +242,8 @@ extension GalleryCollectionViewController: NSFetchedResultsControllerDelegate {
             guard let indexPath = indexPath else { return }
             guard let newIndexPath = newIndexPath else { return }
             operation = BlockOperation { [unowned self] in
-                self.collectionView?.moveItem(at: indexPath, to: newIndexPath)
+                self.collectionView?.deleteItems(at: [indexPath])
+                self.collectionView?.insertItems(at: [newIndexPath])
             }
         }
         changeOperations?.append(operation)
@@ -186,11 +283,11 @@ extension GalleryCollectionViewController {
 // MARK: - Metadata image download
 
 extension GalleryCollectionViewController {
-    func downloadImageList() {
+    func downloadImageList(_ searchTerm: String) -> URLSessionDataTask? {
         
-        let urlString = String(format: URLPath.imageListFormat, "dogs")
+        let urlString = String(format: URLPath.imageListFormat, searchTerm)
         guard let url = URL(string: urlString) else {
-            return
+            return nil
         }
         
         let request = NSMutableURLRequest(url: url)
@@ -226,9 +323,36 @@ extension GalleryCollectionViewController {
                     print("Error: JSON structure not recognized ('data' not found or not valid).")
                     return
                 }
-                self.dataController.insertImageItemDataArray(dataArray: imagesData, completion: { (success, error) in
-                    print("Success?! \(success)")
-                })
+                if imagesData.count == 0 {
+                    DispatchQueue.main.async {
+                        print("No images found")
+                        self.messageView.isHidden = false
+                        self.messageLabel.text = "No images found for: \(self.searchTextField.text ?? "")"
+                    }
+
+                    return
+                }
+                ImageFileType.thumbnail.removeAllLocalFiles()
+                ImageFileType.full.removeAllLocalFiles()
+                self.fetchedResultController.delegate = self
+                self.dataController.deleteAllImageItems(){ (success) in
+                    if success {
+                        self.dataController.insertImageItemDataArray(dataArray: imagesData){ (success, error) in
+                            print("Success?! \(success)")
+                            if success {
+                                self.lastValidSearchTerm = searchTerm
+                            }
+                            self.fetchedResultController = self.dataController.createFeedFetchedResultController()
+                            self.fetchedResultController.delegate = self
+                            self.collectionView?.reloadData()
+                        }
+                    } else {
+                        self.fetchedResultController = self.dataController.createFeedFetchedResultController()
+                        self.fetchedResultController.delegate = self
+                        self.collectionView?.reloadData()
+                    }
+                }
+                
                 
             } catch {
                 print("Error: \(error.localizedDescription)")
@@ -237,5 +361,6 @@ extension GalleryCollectionViewController {
             
         }
         task.resume()
+        return task
     }
 }
