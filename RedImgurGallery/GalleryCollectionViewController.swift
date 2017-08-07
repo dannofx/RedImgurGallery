@@ -26,18 +26,20 @@ class GalleryCollectionViewController: UICollectionViewController {
     fileprivate let imageTypeToShow = ImageFileType.thumbnail
     fileprivate var selectedIndex: IndexPath!
     fileprivate var listDownloadTask: URLSessionDataTask?
-    lazy fileprivate var lastValidSearchTerm: String! = {
-        return (UserDefaults.standard.value(forKey: StoredValues.lastSearchTerm) as? String) ?? ""
-    }()
-
+    fileprivate var lastValidSearchTerm: String! {
+        didSet {
+            UserDefaults.standard.set(self.lastValidSearchTerm, forKey: StoredValues.lastSearchTerm)
+        }
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         self.searchTextField.delegate = self
+        self.lastValidSearchTerm = self.loadLastValidSearchTerm()
         self.searchTextField.text = self.lastValidSearchTerm
         self.setSearchViewWidth()
         
         NotificationCenter.default.addObserver(self, selector: #selector(viewDidRotate), name: NSNotification.Name.UIDeviceOrientationDidChange, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(didEnterBackground), name: .UIApplicationDidEnterBackground, object: nil)
 
         self.dataController = DataController()
         self.downloadQueue = ImageDownloadQueue(imageFileType: self.imageTypeToShow)
@@ -65,8 +67,13 @@ class GalleryCollectionViewController: UICollectionViewController {
         self.setSearchViewWidth()
     }
     
-    func didEnterBackground() {
-        UserDefaults.standard.set(lastValidSearchTerm, forKey: StoredValues.lastSearchTerm)
+    func reloadData(setDelegate: Bool = true) {
+        self.collectionView?.contentOffset.y = 0
+        self.fetchedResultController = self.dataController.createFeedFetchedResultController()
+        self.collectionView?.reloadData()
+        if (setDelegate) {
+            self.fetchedResultController.delegate = self
+        }
     }
     
     deinit {
@@ -83,8 +90,14 @@ extension GalleryCollectionViewController {
         frame.size.width = self.view.frame.width
         self.searchView.frame = frame
     }
+    func loadLastValidSearchTerm() -> String {
+        return (UserDefaults.standard.value(forKey: StoredValues.lastSearchTerm) as? String) ?? ""
+    }
     
     @IBAction func didTextChanged(_ sender: UITextField) {
+        if !sender.isEditing {
+            return
+        }
         if let searchTerm = sender.text, searchTerm != "" {
             if let listDownloadTask = self.listDownloadTask {
                 listDownloadTask.cancel()
@@ -104,6 +117,7 @@ extension GalleryCollectionViewController {
     }
     
     @IBAction func didBeginEdition(_ sender: UITextField) {
+        self.fetchedResultController.delegate = nil
         self.beginSearchEdition()
     }
     
@@ -111,6 +125,8 @@ extension GalleryCollectionViewController {
         self.searchTextField.resignFirstResponder()
         self.cancelEditionButton.isHidden = true
         self.messageView.isHidden = true
+        self.fetchedResultController.delegate = self
+        self.searchTextField.text = self.lastValidSearchTerm
     }
     
     func beginSearchEdition() {
@@ -156,7 +172,6 @@ extension GalleryCollectionViewController {
         let imageItem = self.fetchedResultController.object(at: indexPath)
         if imageItem.identifier == nil
         {
-            print("Something strange happened :S")
             return cell
         }
         if let imageFile = imageItem.loadImage(forType: self.imageTypeToShow) {
@@ -323,36 +338,7 @@ extension GalleryCollectionViewController {
                     print("Error: JSON structure not recognized ('data' not found or not valid).")
                     return
                 }
-                if imagesData.count == 0 {
-                    DispatchQueue.main.async {
-                        print("No images found")
-                        self.messageView.isHidden = false
-                        self.messageLabel.text = "No images found for: \(self.searchTextField.text ?? "")"
-                    }
-
-                    return
-                }
-                ImageFileType.thumbnail.removeAllLocalFiles()
-                ImageFileType.full.removeAllLocalFiles()
-                self.fetchedResultController.delegate = self
-                self.dataController.deleteAllImageItems(){ (success) in
-                    if success {
-                        self.dataController.insertImageItemDataArray(dataArray: imagesData){ (success, error) in
-                            print("Success?! \(success)")
-                            if success {
-                                self.lastValidSearchTerm = searchTerm
-                            }
-                            self.fetchedResultController = self.dataController.createFeedFetchedResultController()
-                            self.fetchedResultController.delegate = self
-                            self.collectionView?.reloadData()
-                        }
-                    } else {
-                        self.fetchedResultController = self.dataController.createFeedFetchedResultController()
-                        self.fetchedResultController.delegate = self
-                        self.collectionView?.reloadData()
-                    }
-                }
-                
+                self.processReceivedSearchItems(imagesData, forSearchTerm: searchTerm)
                 
             } catch {
                 print("Error: \(error.localizedDescription)")
@@ -362,5 +348,38 @@ extension GalleryCollectionViewController {
         }
         task.resume()
         return task
+    }
+    
+    func processReceivedSearchItems(_ imageDataItems:[[String: Any]], forSearchTerm searchTerm: String) {
+        // Check if there is data to set up
+        if imageDataItems.count == 0 {
+            DispatchQueue.main.async {
+                self.messageView.isHidden = false
+                self.messageLabel.text = "No images found for: \(self.searchTextField.text ?? "")"
+            }
+            
+            return
+        }
+        // Cancel the thumbnails downloads for the previous search term
+        self.downloadQueue.cancelAllOperations()
+        // Remove cached images for the previous term
+        ImageFileType.thumbnail.removeAllLocalFiles()
+        ImageFileType.full.removeAllLocalFiles()
+        // Process the new data
+        self.dataController.deleteAllImageItems(){ (success) in
+            if success {
+                self.dataController.insertImageItemDataArray(dataArray: imageDataItems){ (success, error) in
+                    if success {
+                        self.lastValidSearchTerm = searchTerm
+                        if !self.searchTextField.isEditing {
+                            self.searchTextField.text = self.lastValidSearchTerm
+                        }
+                    }
+                    self.reloadData(setDelegate: false)
+                }
+            } else {
+                self.reloadData(setDelegate: false)
+            }
+        }
     }
 }
