@@ -59,7 +59,7 @@ class GalleryCollectionViewController: UICollectionViewController {
     
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
+        self.downloadQueue.cancelAllOperations()
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -115,7 +115,6 @@ extension GalleryCollectionViewController {
             self.listDownloadTask = self.downloadImageList(searchTerm,
                                                            page: 0,
                                                            completionBlock: processNewSearchItems(success:imageDataItems:forSearchTerm:page:))
-            self.messageView.isHidden = true
             if (self.listDownloadTask == nil) {
                 self.searchTextField.text = lastValidSearchTerm
             }
@@ -129,6 +128,7 @@ extension GalleryCollectionViewController {
     }
     
     @IBAction func didBeginEdition(_ sender: UITextField) {
+        self.messageView.isHidden = false
         self.fetchedResultController.delegate = nil
         self.beginSearchEdition()
     }
@@ -414,7 +414,6 @@ extension GalleryCollectionViewController {
         // Check if there is data to set up
         guard let imageDataItems = imageDataItems, imageDataItems.count > 0 else{
             DispatchQueue.main.async {
-                self.messageView.isHidden = false
                 self.messageLabel.text = "No images found for: \(self.searchTextField.text ?? "")"
             }
             return

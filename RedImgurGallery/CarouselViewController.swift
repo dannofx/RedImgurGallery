@@ -82,7 +82,7 @@ class CarouselViewController: UIPageViewController {
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
-        print("Running low on memory!")
+        self.downloadQueue.cancelAllOperations()
     }
 
     func createController() -> DetailViewController {
