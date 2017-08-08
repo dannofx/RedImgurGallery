@@ -87,6 +87,7 @@
                                     <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no" keyboardType="alphabet" returnKeyType="search"/>
                                     <connections>
                                         <action selector="didBeginEdition:" destination="JFO-Ry-dYl" eventType="editingDidBegin" id="cqo-eG-JpL"/>
+                                        <action selector="didEndEdition:" destination="JFO-Ry-dYl" eventType="editingDidEnd" id="bIo-Hs-7yg"/>
                                         <action selector="didTextChanged:" destination="JFO-Ry-dYl" eventType="editingChanged" id="Eln-Ax-iKe"/>
                                     </connections>
                                 </textField>

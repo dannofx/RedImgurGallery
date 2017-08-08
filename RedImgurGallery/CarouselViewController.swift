@@ -9,6 +9,10 @@
 import UIKit
 import CoreData
 
+protocol CarouselViewControllerDelegate: class {
+    func carouselViewControllerDidReachLastItem(_ carouselController: CarouselViewController)
+}
+
 class CarouselViewController: UIPageViewController {
     
     var fetchedResultsController: NSFetchedResultsController<ImageItem>!
@@ -18,6 +22,7 @@ class CarouselViewController: UIPageViewController {
     fileprivate let imageTypeToShow = ImageFileType.full
     fileprivate var downloadQueue: ImageDownloadQueue!
     fileprivate var pageControllers: [Int: DetailViewController]!
+    var carouselDelegate: CarouselViewControllerDelegate?
 
 
     override func viewDidLoad() {
@@ -26,9 +31,7 @@ class CarouselViewController: UIPageViewController {
         self.dataSource = self
         self.indexToShow = self.currentIndex
         self.downloadQueue = ImageDownloadQueue(imageFileType: self.imageTypeToShow)
-        self.createPageControllers()
-        self.loadCurrentController()
-
+        self.loadControllers()
     }
     
     func createPageControllers() {
@@ -39,6 +42,11 @@ class CarouselViewController: UIPageViewController {
             pageControllers[i] = controller
         }
         self.refreshControllers(forMainIndex: self.currentIndex, forceReaload: true)
+    }
+    
+    func loadControllers() {
+        self.createPageControllers()
+        self.loadCurrentController()
     }
     
     func refreshControllers(forMainIndex mainIndex: IndexPath, forceReaload: Bool = false) {
@@ -76,15 +84,6 @@ class CarouselViewController: UIPageViewController {
         super.didReceiveMemoryWarning()
         print("Running low on memory!")
     }
-    
-    @IBAction func cancel(_ sender: Any) {
-        self.dismiss(animated: true)
-    }
-    
-    @IBAction func finish(_ sender: Any) {
-        self.loadCurrentController()
-    }
-    
 
     func createController() -> DetailViewController {
         let detailController = self.storyboard?.instantiateViewController(withIdentifier: StoryboardID.detail) as! DetailViewController
@@ -136,6 +135,8 @@ extension CarouselViewController: UIPageViewControllerDataSource {
         if row < self.fetchedResultsController.sections![0].numberOfObjects {
             return self.pageControllers[row]
         } else {
+            // If this happens, the end was reached, so a search for more images should start
+            self.carouselDelegate?.carouselViewControllerDidReachLastItem(self)
             return nil
         }
     }

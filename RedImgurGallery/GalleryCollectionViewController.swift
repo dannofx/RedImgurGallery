@@ -23,9 +23,13 @@ class GalleryCollectionViewController: UICollectionViewController {
     fileprivate var fetchedResultController: NSFetchedResultsController<ImageItem>!
     fileprivate var changeOperations: [BlockOperation]?
     fileprivate var downloadQueue: ImageDownloadQueue!
+    fileprivate var downloadingPage: Bool!
+    fileprivate var lastPage: Int!
+    fileprivate var morePages: Bool!
     fileprivate let imageTypeToShow = ImageFileType.thumbnail
     fileprivate var selectedIndex: IndexPath!
     fileprivate var listDownloadTask: URLSessionDataTask?
+    fileprivate weak var showingCarouselController: CarouselViewController?
     fileprivate var lastValidSearchTerm: String! {
         didSet {
             UserDefaults.standard.set(self.lastValidSearchTerm, forKey: StoredValues.lastSearchTerm)
@@ -47,6 +51,10 @@ class GalleryCollectionViewController: UICollectionViewController {
         
         self.fetchedResultController.delegate = self
         self.collectionView?.isPrefetchingEnabled = false
+        
+        self.downloadingPage = false
+        self.lastPage = 0
+        self.morePages = true
     }
     
     override func didReceiveMemoryWarning() {
@@ -59,7 +67,9 @@ class GalleryCollectionViewController: UICollectionViewController {
             let carouselController = segue.destination as! CarouselViewController
             carouselController.fetchedResultsController = self.fetchedResultController
             carouselController.currentIndex = self.selectedIndex
+            carouselController.carouselDelegate = self
             self.navigationController?.setNavigationBarHidden(false, animated: true)
+            self.showingCarouselController = carouselController
         }
     }
     
@@ -102,7 +112,9 @@ extension GalleryCollectionViewController {
             if let listDownloadTask = self.listDownloadTask {
                 listDownloadTask.cancel()
             }
-            self.listDownloadTask = self.downloadImageList(searchTerm)
+            self.listDownloadTask = self.downloadImageList(searchTerm,
+                                                           page: 0,
+                                                           completionBlock: processNewSearchItems(success:imageDataItems:forSearchTerm:page:))
             self.messageView.isHidden = true
             if (self.listDownloadTask == nil) {
                 self.searchTextField.text = lastValidSearchTerm
@@ -112,7 +124,7 @@ extension GalleryCollectionViewController {
     
     @IBAction func cancelTextEdition(_ sender: Any) {
         if self.searchTextField.isEditing {
-            self.exitSearchEdition()
+            self.searchTextField.resignFirstResponder()
         }
     }
     
@@ -121,8 +133,11 @@ extension GalleryCollectionViewController {
         self.beginSearchEdition()
     }
     
+    @IBAction func didEndEdition(_ sender: UITextField) {
+        self.exitSearchEdition()
+    }
+    
     func exitSearchEdition() {
-        self.searchTextField.resignFirstResponder()
         self.cancelEditionButton.isHidden = true
         self.messageView.isHidden = true
         self.fetchedResultController.delegate = self
@@ -138,7 +153,7 @@ extension GalleryCollectionViewController {
 extension GalleryCollectionViewController: UITextFieldDelegate {
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        self.exitSearchEdition()
+        self.searchTextField.resignFirstResponder()
         return false
     }
 
@@ -227,6 +242,30 @@ extension GalleryCollectionViewController {
     }
 }
 
+// MARK: - Scroll view delegate
+
+extension GalleryCollectionViewController {
+    
+    public override func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        guard let collectionView = self.collectionView else {
+            return
+        }
+        if (collectionView.bounds.maxY == collectionView.contentSize.height) {
+            self.loadMoreItems()
+        }
+    }
+
+}
+
+// MARK: - Carousel View Controller Delegate
+
+extension GalleryCollectionViewController: CarouselViewControllerDelegate {
+    
+    func carouselViewControllerDidReachLastItem(_ carouselController: CarouselViewController) {
+        self.loadMoreItems()
+    }
+}
+
 // MARK: - Fetched Result Controller Delegate
 
 extension GalleryCollectionViewController: NSFetchedResultsControllerDelegate {
@@ -292,16 +331,27 @@ extension GalleryCollectionViewController {
             cell.imageView.image = image
         }
     }
+    
+    func loadMoreItems() {
+        if !self.downloadingPage && self.morePages{
+            self.downloadingPage = true
+            self.lastPage = self.lastPage + 1
+            self.listDownloadTask = self.downloadImageList(self.lastValidSearchTerm,
+                                                           page: self.lastPage,
+                                                           completionBlock: processPageSearchItems(success:imageDataItems:forSearchTerm:page:))
+        }
+    }
 }
 
 
 // MARK: - Metadata image download
 
 extension GalleryCollectionViewController {
-    func downloadImageList(_ searchTerm: String) -> URLSessionDataTask? {
+    func downloadImageList(_ searchTerm: String, page: Int = 0, completionBlock: @escaping (_ success: Bool, _ imageDataItems:[[String: Any]]?, _ searchTerm: String, _ page: Int) -> Void) -> URLSessionDataTask? {
         
-        let urlString = String(format: URLPath.imageListFormat, searchTerm)
+        let urlString = String(format: URLPath.imageListFormat, searchTerm, page)
         guard let url = URL(string: urlString) else {
+            completionBlock(false, nil, searchTerm, page)
             return nil
         }
         
@@ -312,36 +362,42 @@ extension GalleryCollectionViewController {
         let task = URLSession.shared.dataTask(with: request as URLRequest) { (data, response, error) in
             if let error = error {
                 print("Error: \(error.localizedDescription)")
+                completionBlock(false, nil, searchTerm, page)
                 return
             }
             
             guard let response = response else{
                 print("Error: There is no response")
+                completionBlock(false, nil, searchTerm, page)
                 return
             }
             if let responseCode = (response as? HTTPURLResponse)?.statusCode, responseCode != 200 {
                 print("Error: The web service call was not successful (code:\(responseCode))")
+                completionBlock(false, nil, searchTerm, page)
                 return
             }
             
             guard let data = data else {
                 print("Error: There is o data to decode")
+                completionBlock(false, nil, searchTerm, page)
                 return
             }
             
             do {
                 guard let jsonData = try JSONSerialization.jsonObject(with: data) as? [String: Any] else{
                     print("Error: JSON structure not recognized.")
+                    completionBlock(false, nil, searchTerm, page)
                     return
                 }
                 guard let imagesData = jsonData[JSONKey.data] as? [[String: Any]] else {
                     print("Error: JSON structure not recognized ('data' not found or not valid).")
+                    completionBlock(false, nil, searchTerm, page)
                     return
                 }
-                self.processReceivedSearchItems(imagesData, forSearchTerm: searchTerm)
-                
+                completionBlock(true, imagesData, searchTerm, page)
             } catch {
                 print("Error: \(error.localizedDescription)")
+                completionBlock(false, nil, searchTerm, page)
             }
             
             
@@ -350,14 +406,17 @@ extension GalleryCollectionViewController {
         return task
     }
     
-    func processReceivedSearchItems(_ imageDataItems:[[String: Any]], forSearchTerm searchTerm: String) {
+    func processNewSearchItems(success: Bool, imageDataItems:[[String: Any]]?, forSearchTerm searchTerm: String, page: Int) {
+        // If there was a page download, it was cancelled.
+        self.downloadingPage = false
+        self.lastPage = page
+        self.morePages = true
         // Check if there is data to set up
-        if imageDataItems.count == 0 {
+        guard let imageDataItems = imageDataItems, imageDataItems.count > 0 else{
             DispatchQueue.main.async {
                 self.messageView.isHidden = false
                 self.messageLabel.text = "No images found for: \(self.searchTextField.text ?? "")"
             }
-            
             return
         }
         // Cancel the thumbnails downloads for the previous search term
@@ -368,7 +427,7 @@ extension GalleryCollectionViewController {
         // Process the new data
         self.dataController.deleteAllImageItems(){ (success) in
             if success {
-                self.dataController.insertImageItemDataArray(dataArray: imageDataItems){ (success, error) in
+                self.dataController.insertImageItemDataArray(dataArray: imageDataItems){ (success, inserted, error) in
                     if success {
                         self.lastValidSearchTerm = searchTerm
                         if !self.searchTextField.isEditing {
@@ -376,10 +435,27 @@ extension GalleryCollectionViewController {
                         }
                     }
                     self.reloadData(setDelegate: false)
+                    print("New search results added: \(success)")
                 }
             } else {
                 self.reloadData(setDelegate: false)
             }
+        }
+    }
+    
+    func processPageSearchItems(success: Bool, imageDataItems:[[String: Any]]?, forSearchTerm searchTerm: String, page: Int) {
+        self.downloadingPage = false
+        if !success {
+            return
+        }
+        guard let imageDataItems = imageDataItems, imageDataItems.count > 0 else{
+            return
+        }
+        self.lastPage = page
+        self.dataController.insertImageItemDataArray(dataArray: imageDataItems){ (success, inserted, error) in
+            self.morePages = success && inserted > 0
+            self.showingCarouselController?.loadControllers()
+            print("More page results added: \(success)")
         }
     }
 }

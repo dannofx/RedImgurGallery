@@ -114,10 +114,11 @@ extension DataController {
 
 extension DataController {
     
-    func insertImageItemDataArray(dataArray: [[String: Any]], completion: @escaping (_ success: Bool, _ error: Error?) -> Void) {
+    func insertImageItemDataArray(dataArray: [[String: Any]], completion: @escaping (_ success: Bool, _ inserted: Int, _ error: Error?) -> Void) {
         self.persistentContainer.performBackgroundTask { (context) in
             context.automaticallyMergesChangesFromParent = true
             var batchChecked = false
+            var insertedItems = 0
             for imageData in dataArray {
                 if !self.checkIfValidImageData(data: imageData) {
                     continue
@@ -128,18 +129,18 @@ extension DataController {
                     if let _ = self.findImageItem(withId: id, context: context) {
                         // An image exists, is a repeated batch
                         self.viewContext.perform {
-                            completion(false, ImageError.duplicatedBatch)
+                            completion(false, insertedItems, ImageError.duplicatedBatch)
                         }
                         return
                     }
                     batchChecked = true
                 }
-                
+                insertedItems += 1
                 self.insertImageItemData(data: imageData, context: context)
             }
             self.saveContext(context: context)
             self.viewContext.perform {
-                completion(true, nil)
+                completion(true, insertedItems, nil)
             }
         }
         
