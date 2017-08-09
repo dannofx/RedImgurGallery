@@ -16,8 +16,8 @@ class GalleryCollectionViewController: UICollectionViewController {
     @IBOutlet weak var searchView: UIView!
     @IBOutlet weak var searchTextField: UITextField!
     @IBOutlet weak var cancelEditionButton: UIButton!
-    @IBOutlet weak var messageView: UIView!
-    @IBOutlet weak var messageLabel: UILabel!
+    @IBOutlet weak var messageView: MessageView!
+    @IBOutlet weak var cancelButtonConstraint: NSLayoutConstraint!
     
     fileprivate var dataController: DataController!
     fileprivate var fetchedResultController: NSFetchedResultsController<ImageItem>!
@@ -29,6 +29,8 @@ class GalleryCollectionViewController: UICollectionViewController {
     fileprivate let imageTypeToShow = ImageFileType.thumbnail
     fileprivate var selectedIndex: IndexPath!
     fileprivate var listDownloadTask: URLSessionDataTask?
+    fileprivate var cancelButtonWidth: CGFloat!
+    fileprivate var cellSize: CGSize!
     fileprivate weak var showingCarouselController: CarouselViewController?
     fileprivate var lastValidSearchTerm: String! {
         didSet {
@@ -38,10 +40,20 @@ class GalleryCollectionViewController: UICollectionViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        // Search text field appereance
+        let searchImage = #imageLiteral(resourceName: "search").withRenderingMode(.alwaysTemplate)
+        let searchImageView = UIImageView(image: searchImage)
+        searchImageView.tintColor = #colorLiteral(red: 0.4666666687, green: 0.7647058964, blue: 0.2666666806, alpha: 1)
+        self.searchTextField.leftViewMode = .always
+        self.searchTextField.leftView = searchImageView
         self.searchTextField.delegate = self
         self.lastValidSearchTerm = self.loadLastValidSearchTerm()
         self.searchTextField.text = self.lastValidSearchTerm
-        self.setSearchViewWidth()
+        self.setSearchViewFrame()
+        // Cancel button appereance
+        self.cancelEditionButton.layer.cornerRadius = 3.0
+        self.cancelButtonWidth = self.cancelButtonConstraint.constant
+        self.cancelButtonConstraint.constant = 0
         
         NotificationCenter.default.addObserver(self, selector: #selector(viewDidRotate), name: NSNotification.Name.UIDeviceOrientationDidChange, object: nil)
 
@@ -51,6 +63,7 @@ class GalleryCollectionViewController: UICollectionViewController {
         
         self.fetchedResultController.delegate = self
         self.collectionView?.isPrefetchingEnabled = false
+        self.calculateCellSize()
         
         self.downloadingPage = false
         self.lastPage = 0
@@ -74,7 +87,10 @@ class GalleryCollectionViewController: UICollectionViewController {
     }
     
     func viewDidRotate() {
-        self.setSearchViewWidth()
+        self.setSearchViewFrame()
+        self.messageView.layoutSubviews()
+        self.calculateCellSize()
+        self.collectionView?.collectionViewLayout.invalidateLayout()
     }
     
     func reloadData(setDelegate: Bool = true) {
@@ -86,18 +102,34 @@ class GalleryCollectionViewController: UICollectionViewController {
         }
     }
     
+    private func calculateCellSize() {
+        let separationSpace: CGFloat = 5
+        let cellMinimumSize: CGFloat = 100
+        let totalWidth: CGFloat = self.view.frame.width
+        if totalWidth < cellMinimumSize
+        {
+            self.cellSize = CGSize(width: totalWidth, height: totalWidth)
+            return
+        }
+        let cellsNumber = Int(totalWidth / cellMinimumSize)
+        let availableSpace = totalWidth - CGFloat(cellsNumber - 1) * separationSpace
+        let cellSize = availableSpace / CGFloat(cellsNumber)
+        self.cellSize = CGSize(width: cellSize, height: cellSize)
+    }
+    
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
 }
 
-// MARk: Search field
+// MARK: - Search field
 
 extension GalleryCollectionViewController {
     
-    func setSearchViewWidth() {
+    func setSearchViewFrame() {
         var frame: CGRect = self.searchView.frame
         frame.size.width = self.view.frame.width
+        frame.origin = CGPoint(x: 0, y: 0)
         self.searchView.frame = frame
     }
     func loadLastValidSearchTerm() -> String {
@@ -112,6 +144,7 @@ extension GalleryCollectionViewController {
             if let listDownloadTask = self.listDownloadTask {
                 listDownloadTask.cancel()
             }
+            self.messageView.configure(withStatus: .searching, searchTerm: searchTerm)
             self.listDownloadTask = self.downloadImageList(searchTerm,
                                                            page: 0,
                                                            completionBlock: processNewSearchItems(success:imageDataItems:forSearchTerm:page:))
@@ -128,7 +161,6 @@ extension GalleryCollectionViewController {
     }
     
     @IBAction func didBeginEdition(_ sender: UITextField) {
-        self.messageView.isHidden = false
         self.fetchedResultController.delegate = nil
         self.beginSearchEdition()
     }
@@ -138,14 +170,21 @@ extension GalleryCollectionViewController {
     }
     
     func exitSearchEdition() {
-        self.cancelEditionButton.isHidden = true
-        self.messageView.isHidden = true
         self.fetchedResultController.delegate = self
         self.searchTextField.text = self.lastValidSearchTerm
+        UIView.animate(withDuration: 0.5) {
+            self.cancelButtonConstraint.constant = 0
+            self.messageView.isHidden = true
+            self.searchView.layoutIfNeeded()
+        }
     }
     
     func beginSearchEdition() {
-        self.cancelEditionButton.isHidden = false
+        self.setSearchViewFrame()
+        UIView.animate(withDuration: 0.5) {
+            self.cancelButtonConstraint.constant = self.cancelButtonWidth
+            self.searchView.layoutIfNeeded()
+        }
     }
 }
 
@@ -169,14 +208,13 @@ extension GalleryCollectionViewController: UITextFieldDelegate {
     }
 }
 
-// MARK: UICollectionViewDataSource
+// MARK: - UICollectionViewDataSource
 
-extension GalleryCollectionViewController {
+extension GalleryCollectionViewController: UICollectionViewDelegateFlowLayout {
     
     override func numberOfSections(in collectionView: UICollectionView) -> Int {
         return self.fetchedResultController.sections!.count
     }
-
 
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return self.fetchedResultController.sections!.first!.numberOfObjects
@@ -185,59 +223,43 @@ extension GalleryCollectionViewController {
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! ThumbnailCollectionViewCell
         let imageItem = self.fetchedResultController.object(at: indexPath)
-        if imageItem.identifier == nil
-        {
-            return cell
-        }
-        if let imageFile = imageItem.loadImage(forType: self.imageTypeToShow) {
-            cell.imageView.image = imageFile
-        } else {
-            cell.imageView.image = nil
+        var shouldDownload = false
+        
+        cell.configure(withImageItem: imageItem, shouldDownload: &shouldDownload)
+        
+        if (shouldDownload) {
             self.downloadQueue.addDownload(imageItem: imageItem, completionBlock: { [unowned self] (status, identifier, managedObjectID, image) in
                 if status == .downloaded {
                     self.reloadCell(forObjectID: managedObjectID, image: image!)
                 }
             })
         }
-        
         return cell
     }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        return self.cellSize
+    }
 }
-
-// MARK: UICollectionViewDelegate
+// MARK: - UICollectionViewDelegate
 
 extension GalleryCollectionViewController {
     
-    // Uncomment this method to specify if the specified item should be highlighted during tracking
     override func collectionView(_ collectionView: UICollectionView, shouldHighlightItemAt indexPath: IndexPath) -> Bool {
         return true
     }
     
-    // Uncomment this method to specify if the specified item should be selected
     override func collectionView(_ collectionView: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
         return true
     }
     
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if self.searchTextField.isEditing {
-            self.exitSearchEdition()
+            self.searchTextField.resignFirstResponder()
         } else {
             self.selectedIndex = indexPath
             self.performSegue(withIdentifier: StoryboardSegue.detail, sender: self)
         }
-        
-    }
-    
-    // Uncomment these methods to specify if an action menu should be displayed for the specified item, and react to actions performed on the item
-    override func collectionView(_ collectionView: UICollectionView, shouldShowMenuForItemAt indexPath: IndexPath) -> Bool {
-        return false
-    }
-    
-    override func collectionView(_ collectionView: UICollectionView, canPerformAction action: Selector, forItemAt indexPath: IndexPath, withSender sender: Any?) -> Bool {
-        return false
-    }
-    
-    override func collectionView(_ collectionView: UICollectionView, performAction action: Selector, forItemAt indexPath: IndexPath, withSender sender: Any?) {
         
     }
 }
@@ -250,7 +272,7 @@ extension GalleryCollectionViewController {
         guard let collectionView = self.collectionView else {
             return
         }
-        if (collectionView.bounds.maxY == collectionView.contentSize.height) {
+        if (collectionView.bounds.maxY >= collectionView.contentSize.height) {
             self.loadMoreItems()
         }
     }
@@ -328,7 +350,7 @@ extension GalleryCollectionViewController {
             return
         }
         if let cell = collectionView.cellForItem(at: indexPath) as? ThumbnailCollectionViewCell {
-            cell.imageView.image = image
+            cell.loadImage(image)
         }
     }
     
@@ -343,8 +365,7 @@ extension GalleryCollectionViewController {
     }
 }
 
-
-// MARK: - Metadata image download
+// MARK: - Data image download
 
 extension GalleryCollectionViewController {
     func downloadImageList(_ searchTerm: String, page: Int = 0, completionBlock: @escaping (_ success: Bool, _ imageDataItems:[[String: Any]]?, _ searchTerm: String, _ page: Int) -> Void) -> URLSessionDataTask? {
@@ -411,11 +432,12 @@ extension GalleryCollectionViewController {
         self.downloadingPage = false
         self.lastPage = page
         self.morePages = true
+        if !success {
+            self.messageView.configure(withStatus: .error, searchTerm: searchTerm)
+        }
         // Check if there is data to set up
         guard let imageDataItems = imageDataItems, imageDataItems.count > 0 else{
-            DispatchQueue.main.async {
-                self.messageLabel.text = "No images found for: \(self.searchTextField.text ?? "")"
-            }
+            self.messageView.configure(withStatus: .noImages, searchTerm: searchTerm)
             return
         }
         // Cancel the thumbnails downloads for the previous search term
@@ -427,17 +449,23 @@ extension GalleryCollectionViewController {
         self.dataController.deleteAllImageItems(){ (success) in
             if success {
                 self.dataController.insertImageItemDataArray(dataArray: imageDataItems){ (success, inserted, error) in
-                    if success {
-                        self.lastValidSearchTerm = searchTerm
-                        if !self.searchTextField.isEditing {
-                            self.searchTextField.text = self.lastValidSearchTerm
+                    DispatchQueue.main.async {
+                        if success {
+                            self.lastValidSearchTerm = searchTerm
+                            if !self.searchTextField.isEditing {
+                                self.searchTextField.text = self.lastValidSearchTerm
+                            }
+                            self.messageView.configure(withStatus: .found, searchTerm: searchTerm)
+                        } else {
+                            self.messageView.configure(withStatus: .error, searchTerm: searchTerm)
                         }
+                        self.reloadData(setDelegate: false)
+                        print("New search results added: \(success)")
                     }
-                    self.reloadData(setDelegate: false)
-                    print("New search results added: \(success)")
                 }
             } else {
                 self.reloadData(setDelegate: false)
+                self.messageView.configure(withStatus: .error, searchTerm: searchTerm)
             }
         }
     }
@@ -448,12 +476,15 @@ extension GalleryCollectionViewController {
             return
         }
         guard let imageDataItems = imageDataItems, imageDataItems.count > 0 else{
+            print("No more pages to load")
             return
         }
         self.lastPage = page
         self.dataController.insertImageItemDataArray(dataArray: imageDataItems){ (success, inserted, error) in
             self.morePages = success && inserted > 0
-            self.showingCarouselController?.loadControllers()
+            DispatchQueue.main.async {
+                self.showingCarouselController?.loadControllers()
+            }
             print("More page results added: \(success)")
         }
     }

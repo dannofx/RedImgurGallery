@@ -15,6 +15,30 @@ class ThumbnailCollectionViewCell: UICollectionViewCell {
         super.init(coder: coder)
     }
     
+    func configure(withImageItem imageItem: ImageItem, shouldDownload: inout Bool) {
+        if imageItem.identifier == nil
+        {
+            return
+        }
+        self.imageView.image = nil
+        if let imageFile = imageItem.loadImage(forType: .thumbnail) {
+            shouldDownload = false
+            self.imageView.image = imageFile
+        } else {
+            self.imageView.image = nil
+            shouldDownload = true
+        }
+    }
+    
+    func loadImage(_ image: UIImage) {
+        self.imageView.image = nil
+        UIView.transition(with: self,
+                          duration: 0.3,
+                          options: .transitionCrossDissolve,
+                          animations: {
+                            self.imageView.image = image
+        })
+    }
     deinit {
     }
 }

@@ -12,6 +12,7 @@
 		512381AB1F2AFAED001A0C65 /* ImageFileType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 512381AA1F2AFAED001A0C65 /* ImageFileType.swift */; };
 		512381B41F2B09D6001A0C65 /* CarouselViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 512381B31F2B09D6001A0C65 /* CarouselViewController.swift */; };
 		512381B61F2B09E5001A0C65 /* DetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 512381B51F2B09E5001A0C65 /* DetailViewController.swift */; };
+		512EADE41F3A4341001CABA9 /* MessageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 512EADE31F3A4341001CABA9 /* MessageView.swift */; };
 		514009ED1F283177005EABF0 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 514009EC1F283177005EABF0 /* AppDelegate.swift */; };
 		514009F21F283177005EABF0 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 514009F01F283177005EABF0 /* Main.storyboard */; };
 		514009F41F283177005EABF0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 514009F31F283177005EABF0 /* Assets.xcassets */; };
@@ -33,6 +34,7 @@
 		512381AA1F2AFAED001A0C65 /* ImageFileType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageFileType.swift; sourceTree = "<group>"; };
 		512381B31F2B09D6001A0C65 /* CarouselViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CarouselViewController.swift; sourceTree = "<group>"; };
 		512381B51F2B09E5001A0C65 /* DetailViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DetailViewController.swift; sourceTree = "<group>"; };
+		512EADE31F3A4341001CABA9 /* MessageView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MessageView.swift; sourceTree = "<group>"; };
 		514009E91F283177005EABF0 /* RedImgurGallery.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RedImgurGallery.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		514009EC1F283177005EABF0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		514009F11F283177005EABF0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -76,6 +78,7 @@
 			children = (
 				514009F51F283177005EABF0 /* LaunchScreen.storyboard */,
 				51E9F9001F2AA64B00BCAAD6 /* ThumbnailCollectionViewCell.swift */,
+				512EADE31F3A4341001CABA9 /* MessageView.swift */,
 			);
 			name = Views;
 			sourceTree = "<group>";
@@ -228,6 +231,7 @@
 				51E9F8FF1F2A925B00BCAAD6 /* ImageDownloadQueue.swift in Sources */,
 				51400A041F2852CE005EABF0 /* Constants.swift in Sources */,
 				51400A0B1F285672005EABF0 /* ImgurModel.xcdatamodeld in Sources */,
+				512EADE41F3A4341001CABA9 /* MessageView.swift in Sources */,
 				5121CD6F1F3185EB00215842 /* UIimage+Utils.swift in Sources */,
 				512381A91F2AFACC001A0C65 /* ImageFileManager.swift in Sources */,
 				512381B61F2B09E5001A0C65 /* DetailViewController.swift in Sources */,
