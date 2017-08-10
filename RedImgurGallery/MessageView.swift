@@ -33,7 +33,7 @@ class MessageView: UIView {
                 self.activityView.stopAnimating()
                 self.activityView.isHidden = true
             case .noImages:
-                self.backgroundColor = #colorLiteral(red: 0.8039215803, green: 0.8039215803, blue: 0.8039215803, alpha: 1)
+                self.backgroundColor = #colorLiteral(red: 0.501960814, green: 0.501960814, blue: 0.501960814, alpha: 1)
                 self.textLabel.text = "No images for: \(searchTerm)"
                 self.activityView.stopAnimating()
                 self.activityView.isHidden = true

@@ -49,13 +49,17 @@ class GalleryCollectionViewController: UICollectionViewController {
         self.searchTextField.delegate = self
         self.lastValidSearchTerm = self.loadLastValidSearchTerm()
         self.searchTextField.text = self.lastValidSearchTerm
+        self.searchView.translatesAutoresizingMaskIntoConstraints = false
         self.setSearchViewFrame()
         // Cancel button appereance
         self.cancelEditionButton.layer.cornerRadius = 3.0
         self.cancelButtonWidth = self.cancelButtonConstraint.constant
         self.cancelButtonConstraint.constant = 0
         
-        NotificationCenter.default.addObserver(self, selector: #selector(viewDidRotate), name: NSNotification.Name.UIDeviceOrientationDidChange, object: nil)
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(viewDidRotate),
+                                               name: NSNotification.Name.UIDeviceOrientationDidChange,
+                                               object: nil)
 
         self.dataController = DataController()
         self.downloadQueue = ImageDownloadQueue(imageFileType: self.imageTypeToShow)
@@ -127,10 +131,12 @@ class GalleryCollectionViewController: UICollectionViewController {
 extension GalleryCollectionViewController {
     
     func setSearchViewFrame() {
-        var frame: CGRect = self.searchView.frame
-        frame.size.width = self.view.frame.width
+        var frame: CGRect = self.navigationController!.navigationBar.frame
+        //frame.size.width = self.view.frame.width
+        //frame.size.height = 44
         frame.origin = CGPoint(x: 0, y: 0)
         self.searchView.frame = frame
+        self.searchView.layoutIfNeeded()
     }
     func loadLastValidSearchTerm() -> String {
         return (UserDefaults.standard.value(forKey: StoredValues.lastSearchTerm) as? String) ?? ""
@@ -433,11 +439,15 @@ extension GalleryCollectionViewController {
         self.lastPage = page
         self.morePages = true
         if !success {
-            self.messageView.configure(withStatus: .error, searchTerm: searchTerm)
+            DispatchQueue.main.async {
+                self.messageView.configure(withStatus: .error, searchTerm: searchTerm)
+            }
         }
         // Check if there is data to set up
         guard let imageDataItems = imageDataItems, imageDataItems.count > 0 else{
-            self.messageView.configure(withStatus: .noImages, searchTerm: searchTerm)
+            DispatchQueue.main.async {
+                self.messageView.configure(withStatus: .noImages, searchTerm: searchTerm)
+            }
             return
         }
         // Cancel the thumbnails downloads for the previous search term
