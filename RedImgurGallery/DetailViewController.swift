@@ -26,7 +26,7 @@ class DetailViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.titleLabel.text = self.imageItem.title
+        //self.titleLabel.text = self.imageItem.title
         self.loadImage()
 
     }

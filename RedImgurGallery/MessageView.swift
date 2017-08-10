@@ -51,5 +51,17 @@ class MessageView: UIView {
             }
         }
     }
+    
+    func updateLayout() {
+        var labelFrame = self.textLabel.frame
+        var activityFrame = self.activityView.frame
+        let paddingLeft: CGFloat = 10
+        let paddingRight: CGFloat = 25
+        labelFrame.origin.x = paddingLeft
+        activityFrame.origin.x = self.frame.width - activityFrame.width - paddingRight
+        labelFrame.size.width = activityFrame.origin.x - labelFrame.origin.x
+        self.textLabel.frame = labelFrame
+        self.activityView.frame = activityFrame
+    }
 
 }

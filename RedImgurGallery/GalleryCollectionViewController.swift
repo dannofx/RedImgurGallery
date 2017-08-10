@@ -13,11 +13,7 @@ private let reuseIdentifier = "thumbnail"
 
 class GalleryCollectionViewController: UICollectionViewController {
     
-    @IBOutlet weak var searchView: UIView!
-    @IBOutlet weak var searchTextField: UITextField!
-    @IBOutlet weak var cancelEditionButton: UIButton!
-    @IBOutlet weak var messageView: MessageView!
-    @IBOutlet weak var cancelButtonConstraint: NSLayoutConstraint!
+    @IBOutlet weak var searchHeaderView: SearchHeaderView!
     
     fileprivate var dataController: DataController!
     fileprivate var fetchedResultController: NSFetchedResultsController<ImageItem>!
@@ -31,6 +27,7 @@ class GalleryCollectionViewController: UICollectionViewController {
     fileprivate var listDownloadTask: URLSessionDataTask?
     fileprivate var cancelButtonWidth: CGFloat!
     fileprivate var cellSize: CGSize!
+    fileprivate var wasPortrait: Bool!
     fileprivate weak var showingCarouselController: CarouselViewController?
     fileprivate var lastValidSearchTerm: String! {
         didSet {
@@ -40,38 +37,35 @@ class GalleryCollectionViewController: UICollectionViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Search text field appereance
-        let searchImage = #imageLiteral(resourceName: "search").withRenderingMode(.alwaysTemplate)
-        let searchImageView = UIImageView(image: searchImage)
-        searchImageView.tintColor = #colorLiteral(red: 0.4666666687, green: 0.7647058964, blue: 0.2666666806, alpha: 1)
-        self.searchTextField.leftViewMode = .always
-        self.searchTextField.leftView = searchImageView
-        self.searchTextField.delegate = self
+        // Instance values set up
+        self.downloadingPage = false
+        self.lastPage = 0
+        self.morePages = true
+        self.wasPortrait = UIDevice.current.orientation.isPortrait
         self.lastValidSearchTerm = self.loadLastValidSearchTerm()
-        self.searchTextField.text = self.lastValidSearchTerm
-        self.searchView.translatesAutoresizingMaskIntoConstraints = false
-        self.setSearchViewFrame()
-        // Cancel button appereance
-        self.cancelEditionButton.layer.cornerRadius = 3.0
-        self.cancelButtonWidth = self.cancelButtonConstraint.constant
-        self.cancelButtonConstraint.constant = 0
-        
+        // Search header appereance
+        self.searchHeaderView.searchTextField.delegate = self
+        self.searchHeaderView.searchTextField.text = self.lastValidSearchTerm
+        self.searchHeaderView.updateLayout(superViewSize: self.navigationController!.navigationBar.frame.size)
+        // Notification to detect orientation changes
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(viewDidRotate),
                                                name: NSNotification.Name.UIDeviceOrientationDidChange,
                                                object: nil)
-
+        // Core Data set up
         self.dataController = DataController()
-        self.downloadQueue = ImageDownloadQueue(imageFileType: self.imageTypeToShow)
         self.fetchedResultController = self.dataController.createFeedFetchedResultController()
-        
         self.fetchedResultController.delegate = self
+        // Collection view configuration
         self.collectionView?.isPrefetchingEnabled = false
         self.calculateCellSize()
-        
-        self.downloadingPage = false
-        self.lastPage = 0
-        self.morePages = true
+        // Download queue set up
+        self.downloadQueue = ImageDownloadQueue(imageFileType: self.imageTypeToShow)
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        self.searchHeaderView.updateLayout(superViewSize: self.navigationController!.navigationBar.frame.size)
+        self.navigationController?.hidesBarsOnSwipe = true
     }
     
     override func didReceiveMemoryWarning() {
@@ -91,10 +85,20 @@ class GalleryCollectionViewController: UICollectionViewController {
     }
     
     func viewDidRotate() {
-        self.setSearchViewFrame()
-        self.messageView.layoutSubviews()
+        if wasPortrait == UIDevice.current.orientation.isPortrait {
+            // Avoid unnecessary changes
+            return
+        }
+        wasPortrait = UIDevice.current.orientation.isPortrait
+        UIView.animate(withDuration: 0.5) {
+            self.searchHeaderView.updateLayout(superViewSize: self.navigationController!.navigationBar.frame.size)
+        }
         self.calculateCellSize()
         self.collectionView?.collectionViewLayout.invalidateLayout()
+    }
+    
+    func adjustLayoutAfterRotation() {
+        
     }
     
     func reloadData(setDelegate: Bool = true) {
@@ -130,14 +134,6 @@ class GalleryCollectionViewController: UICollectionViewController {
 
 extension GalleryCollectionViewController {
     
-    func setSearchViewFrame() {
-        var frame: CGRect = self.navigationController!.navigationBar.frame
-        //frame.size.width = self.view.frame.width
-        //frame.size.height = 44
-        frame.origin = CGPoint(x: 0, y: 0)
-        self.searchView.frame = frame
-        self.searchView.layoutIfNeeded()
-    }
     func loadLastValidSearchTerm() -> String {
         return (UserDefaults.standard.value(forKey: StoredValues.lastSearchTerm) as? String) ?? ""
     }
@@ -150,19 +146,19 @@ extension GalleryCollectionViewController {
             if let listDownloadTask = self.listDownloadTask {
                 listDownloadTask.cancel()
             }
-            self.messageView.configure(withStatus: .searching, searchTerm: searchTerm)
+            self.searchHeaderView.messageView.configure(withStatus: .searching, searchTerm: searchTerm)
             self.listDownloadTask = self.downloadImageList(searchTerm,
                                                            page: 0,
                                                            completionBlock: processNewSearchItems(success:imageDataItems:forSearchTerm:page:))
             if (self.listDownloadTask == nil) {
-                self.searchTextField.text = lastValidSearchTerm
+                self.searchHeaderView.searchTextField.text = lastValidSearchTerm
             }
         }
     }
     
     @IBAction func cancelTextEdition(_ sender: Any) {
-        if self.searchTextField.isEditing {
-            self.searchTextField.resignFirstResponder()
+        if self.searchHeaderView.searchTextField.isEditing {
+            self.searchHeaderView.searchTextField.resignFirstResponder()
         }
     }
     
@@ -177,20 +173,16 @@ extension GalleryCollectionViewController {
     
     func exitSearchEdition() {
         self.fetchedResultController.delegate = self
-        self.searchTextField.text = self.lastValidSearchTerm
+        self.searchHeaderView.searchTextField.text = self.lastValidSearchTerm
+        self.searchHeaderView.showCancelOptions(false)
         UIView.animate(withDuration: 0.5) {
-            self.cancelButtonConstraint.constant = 0
-            self.messageView.isHidden = true
-            self.searchView.layoutIfNeeded()
+            self.searchHeaderView.messageView.isHidden = true
         }
     }
     
     func beginSearchEdition() {
-        self.setSearchViewFrame()
-        UIView.animate(withDuration: 0.5) {
-            self.cancelButtonConstraint.constant = self.cancelButtonWidth
-            self.searchView.layoutIfNeeded()
-        }
+        self.searchHeaderView.updateLayout(superViewSize: self.navigationController!.navigationBar.frame.size)
+        self.searchHeaderView.showCancelOptions(true)
     }
 }
 
@@ -198,13 +190,13 @@ extension GalleryCollectionViewController {
 extension GalleryCollectionViewController: UITextFieldDelegate {
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        self.searchTextField.resignFirstResponder()
+        self.searchHeaderView.searchTextField.resignFirstResponder()
         return false
     }
 
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
         let text = string
-        let existingChars = self.searchTextField.text?.characters.count ?? 0
+        let existingChars = self.searchHeaderView.searchTextField.text?.characters.count ?? 0
         if (existingChars + text.characters.count) > 21 {
             return false
         }
@@ -260,8 +252,8 @@ extension GalleryCollectionViewController {
     }
     
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if self.searchTextField.isEditing {
-            self.searchTextField.resignFirstResponder()
+        if self.searchHeaderView.searchTextField.isEditing {
+            self.searchHeaderView.searchTextField.resignFirstResponder()
         } else {
             self.selectedIndex = indexPath
             self.performSegue(withIdentifier: StoryboardSegue.detail, sender: self)
@@ -440,13 +432,13 @@ extension GalleryCollectionViewController {
         self.morePages = true
         if !success {
             DispatchQueue.main.async {
-                self.messageView.configure(withStatus: .error, searchTerm: searchTerm)
+                self.searchHeaderView.messageView.configure(withStatus: .error, searchTerm: searchTerm)
             }
         }
         // Check if there is data to set up
         guard let imageDataItems = imageDataItems, imageDataItems.count > 0 else{
             DispatchQueue.main.async {
-                self.messageView.configure(withStatus: .noImages, searchTerm: searchTerm)
+                self.searchHeaderView.messageView.configure(withStatus: .noImages, searchTerm: searchTerm)
             }
             return
         }
@@ -462,12 +454,12 @@ extension GalleryCollectionViewController {
                     DispatchQueue.main.async {
                         if success {
                             self.lastValidSearchTerm = searchTerm
-                            if !self.searchTextField.isEditing {
-                                self.searchTextField.text = self.lastValidSearchTerm
+                            if !self.searchHeaderView.searchTextField.isEditing {
+                                self.searchHeaderView.searchTextField.text = self.lastValidSearchTerm
                             }
-                            self.messageView.configure(withStatus: .found, searchTerm: searchTerm)
+                            self.searchHeaderView.messageView.configure(withStatus: .found, searchTerm: searchTerm)
                         } else {
-                            self.messageView.configure(withStatus: .error, searchTerm: searchTerm)
+                            self.searchHeaderView.messageView.configure(withStatus: .error, searchTerm: searchTerm)
                         }
                         self.reloadData(setDelegate: false)
                         print("New search results added: \(success)")
@@ -475,7 +467,7 @@ extension GalleryCollectionViewController {
                 }
             } else {
                 self.reloadData(setDelegate: false)
-                self.messageView.configure(withStatus: .error, searchTerm: searchTerm)
+                self.searchHeaderView.messageView.configure(withStatus: .error, searchTerm: searchTerm)
             }
         }
     }

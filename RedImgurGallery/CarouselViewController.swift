@@ -32,6 +32,7 @@ class CarouselViewController: UIPageViewController {
         self.indexToShow = self.currentIndex
         self.downloadQueue = ImageDownloadQueue(imageFileType: self.imageTypeToShow)
         self.loadControllers()
+        self.navigationController?.hidesBarsOnSwipe = false
     }
     
     func createPageControllers() {
