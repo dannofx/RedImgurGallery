@@ -97,10 +97,6 @@ class GalleryCollectionViewController: UICollectionViewController {
         self.collectionView?.collectionViewLayout.invalidateLayout()
     }
     
-    func adjustLayoutAfterRotation() {
-        
-    }
-    
     func reloadData(setDelegate: Bool = true) {
         self.collectionView?.contentOffset.y = 0
         self.fetchedResultController = self.dataController.createFeedFetchedResultController()

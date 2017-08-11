@@ -24,6 +24,10 @@ extension ImageItem {
         ImageFileManager.writeImage(image: image, toFile: type.getLocalFilePath(forId: identifier))
     }
     
+    func thumbnailExists() -> Bool {
+        return ImageItem.thumbnailExists(identifier: self.identifier!)
+    }
+    
     class func loadImage(forIdentifier identifier: String, type: ImageFileType) -> UIImage? {
         let image = ImageFileManager.loadImage(fromFile: type.getLocalFilePath(forId: identifier))
         return image
