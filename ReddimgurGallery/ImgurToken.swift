@@ -9,6 +9,5 @@
 import Foundation
 
 struct ImgurCredentials {
-    static let clientID = "Client-ID XXXXXXXX" YOUR IMGUR TOKEN HERE
-    static let clientSecret = "XXXXXX"// this is not necessary by now
+    static let clientID = "XXXXXXXX" YOUR IMGUR TOKEN HERE
 }
