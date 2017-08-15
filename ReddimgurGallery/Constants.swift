@@ -20,6 +20,7 @@ struct URLPath {
 
 struct HTTPHeaderName {
     static let authorization = "Authorization"
+    static let clientID = "Client-ID"
 }
 
 struct JSONKey {

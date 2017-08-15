@@ -371,8 +371,9 @@ extension GalleryCollectionViewController {
         }
         
         let request = NSMutableURLRequest(url: url)
+        let clientIDValue = "\(HTTPHeaderName.clientID) \(ImgurCredentials.clientID)"
         request.timeoutInterval = 10
-        request.setValue(ImgurCredentials.clientID, forHTTPHeaderField: HTTPHeaderName.authorization)
+        request.setValue(clientIDValue, forHTTPHeaderField: HTTPHeaderName.authorization)
         
         let task = URLSession.shared.dataTask(with: request as URLRequest) { (data, response, error) in
             if let error = error {
