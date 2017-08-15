@@ -3,7 +3,7 @@ ReddimgurGallery is iOS an app made in Swift that shows images hosted in [Imgur]
 
 I made this app to get some practice working with `OperationQueue`, some `CoreData` features like `NSBatchDeleteRequest`, `DispatchQueue` and Swift coding in general. That is the reason why the app doesn't use simply `URLSession` and some cache like `NSCache` or `NSURLCache`.  
 
-![Preview](https://media.giphy.com/media/26n6WXVo9rMLk3q7u/giphy.gif)
+![Preview](img/reddimgur.gif)
 
 ## Requirements
 
