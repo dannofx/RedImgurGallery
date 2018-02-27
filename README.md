@@ -1,5 +1,5 @@
 # ReddimgurGallery
-ReddimgurGallery is iOS an app made in Swift that shows images hosted in [Imgur](http://imgur.com/) related to a certain subreddit. You introduce a subreddit name in the search bar and the images will be asynchronously loaded.  
+ReddimgurGallery is an iOS app made in Swift that shows images hosted in [Imgur](http://imgur.com/) related to a certain subreddit. When the user introduces a subreddit name in the search bar, the images will be asynchronously loaded.  
 
 I made this app to get some practice working with `OperationQueue`, some `CoreData` features like `NSBatchDeleteRequest`, `DispatchQueue` and Swift coding in general. That is the reason why the app doesn't use simply `URLSession` and some cache like `NSCache` or `NSURLCache`.  
 
@@ -24,4 +24,4 @@ After updating the file you are ready to run the app.
 
 ## Contributions
 
-By now, I'm not thinking in growing this project, but contributions via pull request are welcome.
+By now, I'm not thinking in growing this project, but contributions via pull requests are welcome.
